@@ -1,0 +1,13 @@
+{
+  "name": "Suara",
+  "version": "1.0.0",
+  "main": "src/index.js",
+  "license": "MIT",
+  "dependencies": {
+    "discord.js": "^14.3.0",
+    "dotenv": "^16.0.1"
+  },
+  "devDependencies": {
+    "eslint": "^8.22.0"
+  }
+}
