@@ -3,7 +3,6 @@ const fs = require("fs");
 const config = require("../config.json");
 const collection = require("./utils/collection.js");
 const { Client, Collection, GatewayIntentBits } = require("discord.js");
-const { redisClient } = require("../database/index.js");
 const token = process.env.BOT_TOKEN;
 
 const client = new Client({
@@ -15,20 +14,29 @@ const client = new Client({
   ],
 });
 
+// 1. use sorted set on the redis ( or even normal set would work)
+// 2. set the id into guildId:channelId = [list of users]
+
 client.commands = new Collection();
 client.voiceChatManagers = new Collection();
 client.config = config;
 
-client.on("ready", () => {
-  console.log(
-    `Ready to serve in ${client.channels.cache.size} channels on ${client.guilds.cache.size} servers, for a total of ${client.users.cache.size} users.`
-  );
+const setRedisInitialValue =  async (redisClient,channels)  => {
+  channels.forEach(channel => {
+    const guildId = channel.guild.id;
+    const channelId = channel.id;
 
-  //loading up initial data
+    channel.members.forEach(async (member) => {
+        await redisClient.sAdd(`${guildId}:${channelId}`,member.user.username);
+    });
+  })
+}
+
+const setInitialData = async (redisClient,channels) => {
   const { voiceChatManagers } = client;
 
-  const channels = client.channels.cache.filter((channel) => channel.type == 2);
-  channels.forEach((voiceChannel) => {
+
+  channels.forEach(async (voiceChannel)  => {
     const guildId = voiceChannel.guild.id;
     const guildVoiceChannels = collection.getOrCreateKey(
       voiceChatManagers,
@@ -40,10 +48,27 @@ client.on("ready", () => {
       voiceChannel.id,
       Set
     );
+    const members = await redisClient.SMEMBERS(`${guildId}:${voiceChannel.id}`)
+    console.log(members)
+
     voiceChannel.members.forEach((member) => {
       voiceMembers.add(member.user.username);
     });
   });
+}
+
+client.on("ready", async () => {
+  console.log(
+    `Ready to serve in ${client.channels.cache.size} channels on ${client.guilds.cache.size} servers, for a total of ${client.users.cache.size} users.`
+  );
+  const { redisClient } = await require("../database/index.js");
+
+
+  //loading up initial data
+  const channels = client.channels.cache.filter((channel) => channel.type == 2);
+  setRedisInitialValue(redisClient,channels)
+  setInitialData(redisClient,channels);
+
 
   //event and command handling
   const events = fs
