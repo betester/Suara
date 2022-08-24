@@ -3,6 +3,7 @@ const fs = require("fs");
 const config = require("../config.json");
 const collection = require("./utils/collection.js");
 const { Client, Collection, GatewayIntentBits } = require("discord.js");
+const { redisClient } = require("../database/index.js");
 const token = process.env.BOT_TOKEN;
 
 const client = new Client({
@@ -25,7 +26,7 @@ client.on("ready", () => {
 
   //loading up initial data
   const { voiceChatManagers } = client;
-  
+
   const channels = client.channels.cache.filter((channel) => channel.type == 2);
   channels.forEach((voiceChannel) => {
     const guildId = voiceChannel.guild.id;
