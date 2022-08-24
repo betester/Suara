@@ -10,7 +10,6 @@ module.exports = (client, message) => {
 
 
   const commandName = args.shift().toLowerCase();
-  console.log(commandName)
   const command = client.commands.get(commandName);
 
 

@@ -1,8 +1,12 @@
-const { VoiceStateManager, Collection } = require("discord.js");
+const { Collection } = require("discord.js");
+const collection = require('../utils/collection.js');
 
-const fetchChannel = (client, channelId, callback) => {
+// TODO: move this into channel utils
+const fetchChannel = (client, channelId, args, callback) => {
   if (channelId == null) return;
-  return client.channels.fetch(channelId).then(callback);
+  return client.channels
+    .fetch(channelId)
+    .then((channel) => callback(channel, args));
 };
 
 const userAction = (oldStateChannelId, newStateChannelId) => {
@@ -12,112 +16,93 @@ const userAction = (oldStateChannelId, newStateChannelId) => {
   return "JOIN OR LEFT";
 };
 
+// TODO: move this to set utils
 const findMissingElement = (largerSet, smallerSet) => {
   for (const element of largerSet) {
     if (!smallerSet.has(element)) {
-      return username;
+      return element;
     }
-}
+  }
+};
 
-const haandleUserAction = (channel, channelUsers) => {
-  const currentChannelUsers = new Set();
+const getSetOfUsernameFromVC = (channel) => {
+  const set = new Set();
   channel.members.forEach((member) => {
-    currentChannelUsers.add(member.user.username);
+    set.add(member.user.username);
   });
 
+  return set;
+};
+
+const handleUserAction = (channel, channelUsers) => {
+  const currentChannelUsers = getSetOfUsernameFromVC(channel);
   let changedStateUser;
 
   // user joined
   if (currentChannelUsers.size > channelUsers.size) {
-    for (const username of currentChannelUsers) {
-      if (!channelUsers.has(username)) {
-        changedStateUser = username;
-        break;
-      }
-    }
-
-    console.log(`${changedStateUser} joined voice chat`);
+    changedStateUser = findMissingElement(currentChannelUsers, channelUsers);
     channelUsers.add(changedStateUser);
   }
   // user left
   else {
-    console.log("harusnya ini kepanggil kalo user left");
-    for (const username of channelUsers) {
-      if (!currentChannelUsers.has(username)) {
-        changedStateUser = username;
-        break;
-      }
-    }
-
-    console.log(`${changedStateUser} left voice chat`);
+    changedStateUser = findMissingElement(channelUsers, currentChannelUsers);
     channelUsers.delete(changedStateUser);
   }
-  console.log(guildChannels);
-  console.log(voiceChatManagers);
+  return { username: changedStateUser, channelName: channel.name };
 };
 
-module.exports = (client, oldState, newState) => {
+
+
+module.exports = async (client, oldState, newState) => {
   const { voiceChatManagers } = client;
 
-  if (!voiceChatManagers.get(newState.guild.id)) {
-    voiceChatManagers.set(newState.guild.id, new Collection());
-  }
-
-  const guildChannels = voiceChatManagers.get(newState.guild.id);
-
-  // handle if channelUsers is undefined
-  if (!guildChannels.get(newState.channelId)) {
-    guildChannels.set(newState.channelId, new Set());
-  }
-
-  const channelUsers = guildChannels.get(
-    newState.channelId || oldState.channelId
+  const guildChannels = collection.getOrCreateKey(
+    voiceChatManagers,
+    newState.guild.id,
+    Collection
   );
 
-  fetchChannel(client, newState.channelId || oldState.channelId, (channel) => {
-    const currentChannelUsers = new Set();
-    channel.members.forEach((member) => {
-      currentChannelUsers.add(member.user.username);
-    });
+  const newStateChannelUsers = collection.getOrCreateKey(
+    guildChannels,
+    newState.channelId,
+    Set
+  );
+  const oldStateChannelUsers = collection.getOrCreateKey(
+    guildChannels,
+    oldState.channelId,
+    Set
+  );
 
-    let changedStateUser;
-
-    // user joined
-    if (currentChannelUsers.size > channelUsers.size) {
-      for (const username of currentChannelUsers) {
-        if (!channelUsers.has(username)) {
-          changedStateUser = username;
-          break;
-        }
-      }
-
-      console.log(`${changedStateUser} joined voice chat`);
-      channelUsers.add(changedStateUser);
-    }
-    // user left
-    else {
-      console.log("harusnya ini kepanggil kalo user left");
-      for (const username of channelUsers) {
-        if (!currentChannelUsers.has(username)) {
-          changedStateUser = username;
-          break;
-        }
-      }
-
-      console.log(`${changedStateUser} left voice chat`);
-      channelUsers.delete(changedStateUser);
-    }
-    console.log(guildChannels);
-    console.log(voiceChatManagers);
-  });
+  const newStateData = await fetchChannel(
+    client,
+    newState.channelId,
+    newStateChannelUsers,
+    handleUserAction
+  );
+  const oldStateData = await fetchChannel(
+    client,
+    oldState.channelId,
+    oldStateChannelUsers,
+    handleUserAction
+  );
 
   if (oldState.channelId == null) {
     client.channels.fetch(oldState.guild.systemChannelId).then((channel) => {
-      channel.send("Someone joined the voice chat");
+      channel.send(
+        `${newStateData.username} joined ${newStateData.channelName} voice chat`
+      );
     });
   } else if (newState.channelId == null) {
     client.channels.fetch(newState.guild.systemChannelId).then((channel) => {
-      channel.send("Someone left the voice chat");
+      channel.send(
+        `${oldStateData.username} left ${oldStateData.channelName} voice chat`
+      );
+    });
+  } else {
+    client.channels.fetch(newState.guild.systemChannelId).then((channel) => {
+      channel.send(
+        `${newStateData.username} moved from ${oldStateData.channelName} to ${newStateData.channelName}`
+      );
     });
   }
 };

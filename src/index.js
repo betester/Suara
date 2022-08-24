@@ -1,9 +1,9 @@
 require("dotenv").config();
 const fs = require("fs");
 const config = require("../config.json");
-
-const token = process.env.BOT_TOKEN;
+const collection = require("./utils/collection.js");
 const { Client, Collection, GatewayIntentBits } = require("discord.js");
+const token = process.env.BOT_TOKEN;
 
 const client = new Client({
   intents: [
@@ -22,6 +22,29 @@ client.on("ready", () => {
   console.log(
     `Ready to serve in ${client.channels.cache.size} channels on ${client.guilds.cache.size} servers, for a total of ${client.users.cache.size} users.`
   );
+
+  //loading up initial data
+  const { voiceChatManagers } = client;
+  
+  const channels = client.channels.cache.filter((channel) => channel.type == 2);
+  channels.forEach((voiceChannel) => {
+    const guildId = voiceChannel.guild.id;
+    const guildVoiceChannels = collection.getOrCreateKey(
+      voiceChatManagers,
+      guildId,
+      Collection
+    );
+    const voiceMembers = collection.getOrCreateKey(
+      guildVoiceChannels,
+      voiceChannel.id,
+      Set
+    );
+    voiceChannel.members.forEach((member) => {
+      voiceMembers.add(member.user.username);
+    });
+  });
+
+  //event and command handling
   const events = fs
     .readdirSync("./src/events")
     .filter((file) => file.endsWith(".js"));
