@@ -7,8 +7,12 @@ module.exports = (client, message) => {
     .slice(client.config.prefix.length)
     .trim()
     .split(/ +/g);
+
+
   const commandName = args.shift().toLowerCase();
+  console.log(commandName)
   const command = client.commands.get(commandName);
+
 
   if (!command) return;
 
