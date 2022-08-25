@@ -1,7 +1,3 @@
-const { Collection } = require("discord.js");
-const collection = require('../utils/collection.js');
-
-// TODO: move this into channel utils
 const fetchChannel = (client, channelId, args, callback) => {
   if (channelId == null) return;
   return client.channels
@@ -9,14 +5,6 @@ const fetchChannel = (client, channelId, args, callback) => {
     .then((channel) => callback(channel, args));
 };
 
-const userAction = (oldStateChannelId, newStateChannelId) => {
-  if (oldStateChannelId !== undefined && newStateChannelId !== undefined) {
-    return "MOVE";
-  }
-  return "JOIN OR LEFT";
-};
-
-// TODO: move this to set utils
 const findMissingElement = (largerSet, smallerSet) => {
   for (const element of largerSet) {
     if (!smallerSet.has(element)) {
@@ -33,56 +21,57 @@ const getSetOfUsernameFromVC = (channel) => {
 
   return set;
 };
-
-const handleUserAction = (channel, channelUsers) => {
+const handleUserAction = async (channel, data) => {
+  const { channelUsers, redisClient, guildId } = data;
   const currentChannelUsers = getSetOfUsernameFromVC(channel);
   let changedStateUser;
 
   // user joined
-  if (currentChannelUsers.size > channelUsers.size) {
-    changedStateUser = findMissingElement(currentChannelUsers, channelUsers);
-    channelUsers.add(changedStateUser);
-  }
-  // user left
-  else {
-    changedStateUser = findMissingElement(channelUsers, currentChannelUsers);
-    channelUsers.delete(changedStateUser);
+  if (currentChannelUsers.size > channelUsers.length) {
+    changedStateUser = findMissingElement(
+      currentChannelUsers,
+      new Set(channelUsers)
+    );
+    await redisClient.sAdd(`${guildId}:${channel.id}`, changedStateUser);
+  } else {
+    changedStateUser = findMissingElement(
+      new Set(channelUsers),
+      currentChannelUsers
+    );
+    await redisClient.sRem(`${guildId}:${channel.id}`, changedStateUser);
   }
   return { username: changedStateUser, channelName: channel.name };
 };
 
-
-
 module.exports = async (client, oldState, newState) => {
-  const { voiceChatManagers } = client;
+  const { redisClient } = client;
 
-  const guildChannels = collection.getOrCreateKey(
-    voiceChatManagers,
-    newState.guild.id,
-    Collection
+  const redisNewStateChannelUsers = await redisClient.SMEMBERS(
+    `${newState.guild.id}:${newState.channelId}`
   );
 
-  const newStateChannelUsers = collection.getOrCreateKey(
-    guildChannels,
-    newState.channelId,
-    Set
-  );
-  const oldStateChannelUsers = collection.getOrCreateKey(
-    guildChannels,
-    oldState.channelId,
-    Set
+  const redisOldStateChannelUsers = await redisClient.SMEMBERS(
+    `${oldState.guild.id}:${oldState.channelId}`
   );
 
   const newStateData = await fetchChannel(
     client,
     newState.channelId,
-    newStateChannelUsers,
+    {
+      redisClient: redisClient,
+      channelUsers: redisNewStateChannelUsers,
+      guildId: newState.guild.id,
+    },
     handleUserAction
   );
   const oldStateData = await fetchChannel(
     client,
     oldState.channelId,
-    oldStateChannelUsers,
+    {
+      redisClient: redisClient,
+      channelUsers: redisOldStateChannelUsers,
+      guildId: oldState.guild.id,
+    },
     handleUserAction
   );
 
