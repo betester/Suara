@@ -75,23 +75,27 @@ module.exports = async (client, oldState, newState) => {
     handleUserAction
   );
 
-  if (oldState.channelId == null) {
-    client.channels.fetch(oldState.guild.systemChannelId).then((channel) => {
-      channel.send(
-        `${newStateData.username} joined ${newStateData.channelName} voice chat`
-      );
-    });
-  } else if (newState.channelId == null) {
-    client.channels.fetch(newState.guild.systemChannelId).then((channel) => {
-      channel.send(
-        `${oldStateData.username} left ${oldStateData.channelName} voice chat`
-      );
-    });
-  } else {
-    client.channels.fetch(newState.guild.systemChannelId).then((channel) => {
-      channel.send(
-        `${newStateData.username} moved from ${oldStateData.channelName} to ${newStateData.channelName}`
-      );
-    });
+  try {
+    if (oldState.channelId == null) {
+      client.channels.fetch(oldState.guild.systemChannelId).then((channel) => {
+        channel.send(
+          `${newStateData.username} joined ${newStateData.channelName} voice chat`
+        );
+      });
+    } else if (newState.channelId == null) {
+      client.channels.fetch(newState.guild.systemChannelId).then((channel) => {
+        channel.send(
+          `${oldStateData.username} left ${oldStateData.channelName} voice chat`
+        );
+      });
+    } else {
+      client.channels.fetch(newState.guild.systemChannelId).then((channel) => {
+        channel.send(
+          `${newStateData.username} moved from ${oldStateData.channelName} to ${newStateData.channelName}`
+        );
+      });
+    }
+  } catch (error) {
+    console.log(error);
   }
 };
