@@ -46,6 +46,10 @@ const handleUserAction = async (channel, data) => {
 module.exports = async (client, oldState, newState) => {
   const { redisClient } = client;
 
+  if (oldState.channelId === newState.channelId) {
+    return;
+  }
+
   const redisNewStateChannelUsers = await redisClient.SMEMBERS(
     `${newState.guild.id}:${newState.channelId}`
   );

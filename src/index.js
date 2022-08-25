@@ -15,7 +15,7 @@ const client = new Client({
   ],
 });
 
-client.commands = new Collection();
+client.commands = new Collection();``
 client.redisClient = redisClient;
 client.config = config;
 
