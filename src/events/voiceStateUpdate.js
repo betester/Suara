@@ -1,4 +1,5 @@
 var Mutex = require("async-mutex").Mutex;
+const mutex = new Mutex();
 
 const fetchChannel = (client, channelId, args, callback) => {
   if (channelId == null) return;
@@ -26,7 +27,6 @@ const getSetOfUsernameFromVC = (channel) => {
 
 const fetchRedisData = async (client,oldState,newState) => {
   const { redisClient } = client;
-  const mutex = new Mutex();
   let newStateData;
   let oldStateData;
 
