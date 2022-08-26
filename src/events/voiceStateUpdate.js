@@ -25,7 +25,7 @@ const getSetOfUsernameFromVC = (channel) => {
   return set;
 };
 
-const fetchRedisData = async (client,oldState,newState) => {
+const fetchRedisData = async (client, oldState, newState) => {
   const { redisClient } = client;
   let newStateData;
   let oldStateData;
@@ -70,35 +70,44 @@ const handleUserAction = async (channel, data) => {
   let changedStateUser;
 
   // user joined
-  if (currentChannelUsers.size > channelUsers.length) {
-    changedStateUser = findMissingElement(
-      currentChannelUsers,
-      new Set(channelUsers)
-    );
-    await redisClient
-      .multi()
-      .sAdd(`${guildId}:${channel.id}`, changedStateUser)
-      .exec();
-  } else {
-    changedStateUser = findMissingElement(
-      new Set(channelUsers),
-      currentChannelUsers
-    );
-    await redisClient
-      .multi()
-      .sRem(`${guildId}:${channel.id}`, changedStateUser)
-      .exec();
+  try {
+    if (currentChannelUsers.size > channelUsers.length) {
+      changedStateUser = findMissingElement(
+        currentChannelUsers,
+        new Set(channelUsers)
+      );
+      await redisClient
+        .multi()
+        .sAdd(`${guildId}:${channel.id}`, changedStateUser)
+        .exec();
+    } else {
+      changedStateUser = findMissingElement(
+        new Set(channelUsers),
+        currentChannelUsers
+      );
+      await redisClient
+        .multi()
+        .sRem(`${guildId}:${channel.id}`, changedStateUser)
+        .exec();
+    }
+
+    return { oldStateData: null, newStateData: null };
+  } catch (error) {
+    console.log(error);
   }
   return { username: changedStateUser, channelName: channel.name };
 };
 
 module.exports = async (client, oldState, newState) => {
-
   if (oldState.channelId === newState.channelId) {
     return;
   }
 
-  const { oldStateData, newStateData } = await fetchRedisData(client,oldState,newState);
+  const { oldStateData, newStateData } = await fetchRedisData(
+    client,
+    oldState,
+    newState
+  );
 
   try {
     if (oldState.channelId == null) {
