@@ -32,13 +32,19 @@ const handleUserAction = async (channel, data) => {
       currentChannelUsers,
       new Set(channelUsers)
     );
-    await redisClient.sAdd(`${guildId}:${channel.id}`, changedStateUser);
+    await redisClient
+      .multi()
+      .sAdd(`${guildId}:${channel.id}`, changedStateUser)
+      .exec();
   } else {
     changedStateUser = findMissingElement(
       new Set(channelUsers),
       currentChannelUsers
     );
-    await redisClient.sRem(`${guildId}:${channel.id}`, changedStateUser);
+    await redisClient
+      .multi()
+      .sRem(`${guildId}:${channel.id}`, changedStateUser)
+      .exec();
   }
   return { username: changedStateUser, channelName: channel.name };
 };
