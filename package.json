@@ -5,26 +5,27 @@
   "license": "MIT",
   "engines": {
     "node": "16.x",
-    "npm" : "*"
+    "npm": "*"
   },
   "scripts": {
-    "start" : "node src/index.js"
+    "start": "node src/index.js"
   },
   "repository": {
     "type": "git",
-    "url" : "git+https://github.com/betester/Suara.git"
+    "url": "git+https://github.com/betester/Suara.git"
   },
   "keywords": [
     "heroku",
     "discord.js"
   ],
   "dependencies": {
+    "async-mutex": "^0.3.2",
     "discord.js": "^14.3.0",
     "dotenv": "^16.0.1",
     "redis": "^4.3.0"
   },
   "bugs": {
-    "url" :"https://github.com/betester/Suara/issues"
+    "url": "https://github.com/betester/Suara/issues"
   },
   "devDependencies": {
     "eslint": "^8.22.0"
