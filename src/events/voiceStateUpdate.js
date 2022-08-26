@@ -90,12 +90,11 @@ const handleUserAction = async (channel, data) => {
         .sRem(`${guildId}:${channel.id}`, changedStateUser)
         .exec();
     }
-
-    return { oldStateData: null, newStateData: null };
+    return { username: changedStateUser, channelName: channel.name };
   } catch (error) {
     console.log(error);
+    return { oldStateData: null, newStateData: null };
   }
-  return { username: changedStateUser, channelName: channel.name };
 };
 
 module.exports = async (client, oldState, newState) => {
