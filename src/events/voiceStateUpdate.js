@@ -69,7 +69,6 @@ const handleUserAction = async (channel, data) => {
   } catch (error) {
     // try again untill no error?
     console.log(error);
-    return await handleUserAction(channel, data);
   } finally {
     redisClient.unwatch();
   }
@@ -99,7 +98,7 @@ module.exports = async (client, oldState, newState) => {
           `${oldStateData.username} left ${oldStateData.channelName} voice chat`
         );
       });
-    } else {
+    } else if ( newStateData !=null & oldStateData != null ){
       client.channels.fetch(newState.guild.systemChannelId).then((channel) => {
         channel.send(
           `${newStateData.username} moved from ${oldStateData.channelName} to ${newStateData.channelName}`
