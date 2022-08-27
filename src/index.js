@@ -15,7 +15,8 @@ const client = new Client({
   ],
 });
 
-client.commands = new Collection();``
+client.commands = new Collection();
+``;
 client.redisClient = redisClient;
 client.config = config;
 
@@ -32,7 +33,9 @@ const setRedisInitialValue = async (redisClient, channels) => {
 
 client.on("ready", async () => {
   //loading up initial data
-  const channels = client.channels.cache.filter((channel) => channel.type == VOICE_CHAT_ID);
+  const channels = client.channels.cache.filter(
+    (channel) => channel.type == VOICE_CHAT_ID
+  );
   await setRedisInitialValue(redisClient, channels);
   //event and command handling
   const events = fs
@@ -54,6 +57,8 @@ client.on("ready", async () => {
     const command = require(`./commands/${file}`);
     client.commands.set(commandName.toLowerCase(), command);
   }
+
+  console.log("ready!");
 });
 
 client.login(token);
