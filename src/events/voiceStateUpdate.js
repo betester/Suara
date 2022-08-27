@@ -2,6 +2,7 @@ var Mutex = require("async-mutex").Mutex;
 const mutex = new Mutex();
 const setUtil = require("../utils/set.js");
 
+// TODO: refactor 
 const fetchChannel = (client, channelId, args, callback) => {
   if (channelId == null) return;
   return client.channels
