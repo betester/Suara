@@ -1,8 +1,8 @@
+const setUtil = require("../utils/set.js");
 var Mutex = require("async-mutex").Mutex;
 const mutex = new Mutex();
-const setUtil = require("../utils/set.js");
 
-// TODO: refactor 
+// TODO: refactor
 const fetchChannel = (client, channelId, args, callback) => {
   if (channelId == null) return;
   return client.channels
@@ -48,29 +48,57 @@ const handleUserAction = async (channel, data) => {
   const { redisClient, guildId } = data;
   const key = `${guildId}:${channel.id}`;
 
+  const release = await mutex.acquire();
+
   try {
-    // watches this particular key
-    redisClient.watch(key);
-    // if there are other proccess that tries to  get members, this whole transaction will fail
-    // and will be restarted again by the catch block
-    const channelUsers = await redisClient.multi().sMembers(key).exec();
+    const channelUsers = await redisClient.sMembers(key);
     const currentChannelUsers = getSetOfUsernameFromVC(channel);
     const changedStateUser = setUtil.findMissingElement(
       currentChannelUsers,
-      new Set(channelUsers[0])
+      new Set(channelUsers)
     );
 
-    if (currentChannelUsers.size > channelUsers[0].length) {
-      await redisClient.multi().sAdd(key, changedStateUser).exec();
+    if (currentChannelUsers.size > channelUsers.length) {
+      await redisClient.sAdd(key, changedStateUser);
     } else {
-      await redisClient.multi().sRem(key, changedStateUser).exec();
+      await redisClient.sRem(key, changedStateUser);
     }
     return { username: changedStateUser, channelName: channel.name };
   } catch (error) {
-    // try again untill no error?
-    console.log(error);
   } finally {
-    redisClient.unwatch();
+    release();
+  }
+};
+
+const sendJoinedUserMessage = (
+  client,
+  oldState,
+  newState,
+  newStateData,
+  oldStateData
+) => {
+  try {
+    if (oldState.channelId == null) {
+      client.channels.fetch(oldState.guild.systemChannelId).then((channel) => {
+        channel.send(
+          `${newStateData.username} joined ${newStateData.channelName} voice chat`
+        );
+      });
+    } else if (newState.channelId == null) {
+      client.channels.fetch(newState.guild.systemChannelId).then((channel) => {
+        channel.send(
+          `${oldStateData.username} left ${oldStateData.channelName} voice chat`
+        );
+      });
+    } else if ((newStateData != null) & (oldStateData != null)) {
+      client.channels.fetch(newState.guild.systemChannelId).then((channel) => {
+        channel.send(
+          `${newStateData.username} moved from ${oldStateData.channelName} to ${newStateData.channelName}`
+        );
+      });
+    }
+  } catch (error) {
+    console.log(error);
   }
 };
 
@@ -85,27 +113,5 @@ module.exports = async (client, oldState, newState) => {
     newState
   );
 
-  try {
-    if (oldState.channelId == null) {
-      client.channels.fetch(oldState.guild.systemChannelId).then((channel) => {
-        channel.send(
-          `${newStateData.username} joined ${newStateData.channelName} voice chat`
-        );
-      });
-    } else if (newState.channelId == null) {
-      client.channels.fetch(newState.guild.systemChannelId).then((channel) => {
-        channel.send(
-          `${oldStateData.username} left ${oldStateData.channelName} voice chat`
-        );
-      });
-    } else if ( newStateData !=null & oldStateData != null ){
-      client.channels.fetch(newState.guild.systemChannelId).then((channel) => {
-        channel.send(
-          `${newStateData.username} moved from ${oldStateData.channelName} to ${newStateData.channelName}`
-        );
-      });
-    }
-  } catch (error) {
-    console.log(error);
-  }
+  sendJoinedUserMessage(client, oldState, newState, newStateData, oldStateData);
 };

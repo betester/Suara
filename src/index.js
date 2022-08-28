@@ -16,7 +16,6 @@ const client = new Client({
 });
 
 client.commands = new Collection();
-``;
 client.redisClient = redisClient;
 client.config = config;
 
@@ -24,12 +23,12 @@ const setRedisInitialValue = async (redisClient, channels) => {
   channels.forEach((channel) => {
     const guildId = channel.guild.id;
     const channelId = channel.id;
-
     channel.members.forEach(async (member) => {
       await redisClient.sAdd(`${guildId}:${channelId}`, member.user.username);
     });
   });
 };
+
 
 client.on("ready", async () => {
   //loading up initial data
