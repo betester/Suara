@@ -48,8 +48,6 @@ const handleUserAction = async (channel, data) => {
   const { redisClient, guildId } = data;
   const key = `${guildId}:${channel.id}`;
 
-  const release = await mutex.acquire();
-
   try {
     const channelUsers = await redisClient.sMembers(key);
     const currentChannelUsers = getSetOfUsernameFromVC(channel);
@@ -65,8 +63,7 @@ const handleUserAction = async (channel, data) => {
     }
     return { username: changedStateUser, channelName: channel.name };
   } catch (error) {
-  } finally {
-    release();
+    console.log(error);
   }
 };
 
@@ -78,13 +75,13 @@ const sendJoinedUserMessage = (
   oldStateData
 ) => {
   try {
-    if (oldState.channelId == null) {
+    if (oldState.channelId == null && newStateData != null) {
       client.channels.fetch(oldState.guild.systemChannelId).then((channel) => {
         channel.send(
           `${newStateData.username} joined ${newStateData.channelName} voice chat`
         );
       });
-    } else if (newState.channelId == null) {
+    } else if (newState.channelId == null && oldStateData != null) {
       client.channels.fetch(newState.guild.systemChannelId).then((channel) => {
         channel.send(
           `${oldStateData.username} left ${oldStateData.channelName} voice chat`
@@ -107,11 +104,24 @@ module.exports = async (client, oldState, newState) => {
     return;
   }
 
-  const { oldStateData, newStateData } = await fetchRedisData(
-    client,
-    oldState,
-    newState
-  );
+  const release = await mutex.acquire();
 
-  sendJoinedUserMessage(client, oldState, newState, newStateData, oldStateData);
+  try {
+    const { oldStateData, newStateData } = await fetchRedisData(
+      client,
+      oldState,
+      newState
+    );
+
+    sendJoinedUserMessage(
+      client,
+      oldState,
+      newState,
+      newStateData,
+      oldStateData
+    );
+  } catch (error) {
+  } finally {
+    release();
+  }
 };
