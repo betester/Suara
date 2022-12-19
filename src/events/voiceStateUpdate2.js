@@ -10,7 +10,8 @@
 // Solusi sementara, simpan di redis
 
 const { addUser } = require("../../database/service/addUser");
-const { getChannel } = require("..//service/getChannel")
+const { removeUser } = require("../../database/service/removeUser");
+const { getChannel } = require("..//service/getChannel");
 
 const handleUserJoin = async (client, newState) => {
   const channel = await getChannel(client, newState.channelId);
@@ -25,21 +26,34 @@ const handleUserOtherAction = async (client, newState, oldState) => {
   // check dulu kalau channel id-nya sama atau engga
   if (newState.channelId === oldState.channelId) return;
 
-  
+
   // kalau gak,
   // 1. di redis remove user dari set berdasarkan old id channel dan guildId
   // 2. di redis tambahin user ke set berdasarkan old id channel dan guildId
   // 3. send user just moved from blablabla
+
+  const newStateChannel = await getChannel(client, newState.channelId);
+  const oldStateChannel = await getChannel(client, oldState.channelId);
+  const newChannelUserIds = newStateChannel.members.map(member => member.user.username);
+  const oldChannelUserIds = oldStateChannel.members.map(member => member.user.username)
+  await removeUser(oldState.channelId,oldState.guildId, oldChannelUserIds);
+  const newUser = await addUser(newState.channelId,newState.guildId,newChannelUserIds);
+  channel.send(`${newUser} moved from ${oldStateChannel.name} to ${newStateChannel.name}`);
+
 };
 
 const handleUserLeave = async (client, oldState) => {
   // remove dari redis user yang leave berdasarkan channelId dan guildId
+  const channel = await getChannel(client, oldState.channelId);
+  const currentUsersId = channel.members.map(member => member.user.username);
+  const leavingUser = await removeUser(oldState.channelId,oldState.guildId,currentUsersId);
   // send leave channel message
+  channel.send(`${leavingUser} left ${channel.name} voice chat`)
 };
 
 module.exports = async (client, newState, oldState) => {
   if (!oldState && newState) handleUserJoin(client,newState);
-  else if (oldState && newState) console.log("do something else");
-  else if (oldState && !newState) console.log("leave voice chat");
+  else if (oldState && newState) handleUserOtherAction(client, newState, oldState);
+  else if (oldState && !newState) handleUserLeave(client, oldState);
   else console.log("Other weird action happened");
 };
