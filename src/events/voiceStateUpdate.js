@@ -1,140 +1,82 @@
-const setUtil = require("../utils/set.js");
-var Mutex = require("async-mutex").Mutex;
-const mutex = new Mutex();
+const { addUser } = require("../../database/service/addUser");
+const { removeUser } = require("../../database/service/removeUser");
+const { getChannel } = require("../service/getChannel");
+const { sendEmbeds } = require("../service/sendEmbeds");
 
-// TODO: refactor
-// alur kode
-// 1. voiceState berubah, oldState, newState
-// 2. oldState == null && newState != null, baru join
-// 3. oldState != null && newState != null, oldState != newState, pindah channel
-// 3.1 oldState != null && newState != null, oldState == newState, deafen, dkk
-// 4. oldState != null && newState == null, user leave
-// Problem, 
-// discord js cuman ngasih tau user apa aja yang ada di suatu channel, tp g ngasih tau 
-// siapa yang pindah, problem kalau user baru join/left
-// Solusi sementara, simpan di redis
+const handleUserJoin = async (client, newState) => {
+  const channel = await getChannel(client, newState.guild.systemChannelId);
+  const newStatechannel = await getChannel(client, newState.channelId);
+  const currentUsersId = newStatechannel.members.map(
+    (member) => member.user.username
+  );
 
-
-
-const fetchChannel = (client, channelId, args, callback) => {
-  if (!channelId) return;
-  return client.channels
-    .fetch(channelId)
-    .then((channel) => callback(channel, args));
-};
-
-const getSetOfUsernameFromVC = (channel) => {
-  const set = new Set();
-  channel.members.forEach((member) => {
-    set.add(member.user.username);
-  });
-
-  return set;
-};
-
-const fetchRedisData = async (client, oldState, newState) => {
-  const { redisClient } = client;
-
-  const newStateData = await fetchChannel(
-    client,
+  const newUser = await addUser(
     newState.channelId,
-    {
-      redisClient: redisClient,
-      guildId: newState.guild.id,
-    },
-    handleUserAction
-  );
-  const oldStateData = await fetchChannel(
-    client,
-    oldState.channelId,
-    {
-      redisClient: redisClient,
-      guildId: oldState.guild.id,
-    },
-    handleUserAction
+    newState.guildId,
+    currentUsersId
   );
 
-  return { newStateData: newStateData, oldStateData: oldStateData };
+  newUser && sendEmbeds(channel, newUser, "join", newStatechannel.name);
+  // simpan ke redis user yang baru join berdasarkan channelId dan guildId
+  // send just joined channel message
 };
 
-const handleUserAction = async (channel, data) => {
-  const { redisClient, guildId } = data;
-  const key = `${guildId}:${channel.id}`;
+const handleUserOtherAction = async (client, newState, oldState) => {
+  // check dulu kalau channel id-nya sama atau engga
+  if (newState.channelId === oldState.channelId) return;
 
-  try {
-    const channelUsers = await redisClient.sMembers(key);
-    const currentChannelUsers = getSetOfUsernameFromVC(channel);
-    const changedStateUser = setUtil.findMissingElement(
-      currentChannelUsers,
-      new Set(channelUsers)
+  // kalau gak,
+  // 1. di redis remove user dari set berdasarkan old id channel dan guildId
+  // 2. di redis tambahin user ke set berdasarkan old id channel dan guildId
+  // 3. send user just moved from blablabla
+  const channel = await getChannel(client, oldState.guild.systemChannelId);
+  const newStateChannel = await getChannel(client, newState.channelId);
+  const oldStateChannel = await getChannel(client, oldState.channelId);
+  const newChannelUserIds = newStateChannel.members.map(
+    (member) => member.user.username
+  );
+  const oldChannelUserIds = oldStateChannel.members.map(
+    (member) => member.user.username
+  );
+  await removeUser(oldState.channelId, oldState.guildId, oldChannelUserIds);
+  const newUser = await addUser(
+    newState.channelId,
+    newState.guildId,
+    newChannelUserIds
+  );
+
+  newUser &&
+    sendEmbeds(
+      channel,
+      newUser,
+      "change",
+      newStateChannel.name,
+      oldStateChannel.name
     );
-
-    if (currentChannelUsers.size > channelUsers.length) {
-      await redisClient.sAdd(key, changedStateUser);
-    } else {
-      await redisClient.sRem(key, changedStateUser);
-    }
-    return { username: changedStateUser, channelName: channel.name };
-  } catch (error) {
-    console.log(error);
-  }
 };
 
-const sendJoinedUserMessage = (
-  client,
-  oldState,
-  newState,
-  newStateData,
-  oldStateData
-) => {
-  try {
-    if (!(oldState.channelId) && newStateData ) {
-      client.channels.fetch(oldState.guild.systemChannelId).then((channel) => {
-        channel.send(
-          `${newStateData.username} joined ${newStateData.channelName} voice chat`
-        );
-      });
-    } else if (!(newState.channelId)  && oldStateData ) {
-      client.channels.fetch(newState.guild.systemChannelId).then((channel) => {
-        channel.send(
-          `${oldStateData.username} left ${oldStateData.channelName} voice chat`
-        );
-      });
-    } else if (newStateData & oldStateData ) {
-      client.channels.fetch(newState.guild.systemChannelId).then((channel) => {
-        channel.send(
-          `${newStateData.username} moved from ${oldStateData.channelName} to ${newStateData.channelName}`
-        );
-      });
-    }
-  } catch (error) {
-    console.log(error);
-  }
+const handleUserLeave = async (client, oldState) => {
+  // remove dari redis user yang leave berdasarkan channelId dan guildId
+  const channel = await getChannel(client, oldState.guild.systemChannelId);
+  const oldChannel = await getChannel(client, oldState.channelId);
+  const currentUsersId = oldChannel.members.map(
+    (member) => member.user.username
+  );
+  const leavingUser = await removeUser(
+    oldState.channelId,
+    oldState.guildId,
+    currentUsersId
+  );
+
+  leavingUser && sendEmbeds(channel, leavingUser, "left", oldChannel.name);
 };
 
 module.exports = async (client, oldState, newState) => {
-  if (oldState.channelId === newState.channelId) {
-    return;
-  }
-
-  const release = await mutex.acquire();
-
-  try {
-    const { oldStateData, newStateData } = await fetchRedisData(
-      client,
-      oldState,
-      newState
-    );
-
-    sendJoinedUserMessage(
-      client,
-      oldState,
-      newState,
-      newStateData,
-      oldStateData
-    );
-  } catch (error) {
-  } finally {
-    release();
-  }
+  if (!oldState.channelId && newState.channelId)
+    handleUserJoin(client, newState);
+  else if (oldState.channelId && newState.channelId)
+    handleUserOtherAction(client, newState, oldState);
+  else if (oldState.channelId && !newState.channelId)
+    handleUserLeave(client, oldState);
+  else console.log("Other weird action happened");
 };
