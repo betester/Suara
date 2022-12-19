@@ -1,20 +1,22 @@
+const { filter } = require("bluebird");
 const { EmbedBuilder } = require("discord.js");
 
 const sendEmbeds = (channel, userId, status, targetChannel, sourceChannel) => {
   let description = "";
   let color = "#0099ff";
 
-  const user = channel.members.map(
-    (member) => member.user.username === userId && member
-  );
+  const filteredUser = channel.members
+    .filter((member) => member.user.username === userId);
+
+  const user = Array.from(filteredUser).map(([_, value]) => (value));
 
   if (status === "join") {
-    description = `Joined ${targetChannel} voice chat`;
+    description = `${userId} Joined ${targetChannel} voice chat`;
   } else if (status === "left") {
-    description = `Left ${channel.name} voice chat`;
+    description = `${userId} Left ${channel.name} voice chat`;
     color = "#DC0000";
   } else if (status === "change") {
-    description = `Moved from ${sourceChannel} to ${targetChannel} voice chat`;
+    description = `${userId} Moved from ${sourceChannel} to ${targetChannel} voice chat`;
     color = "#FFE15D";
   }
 
