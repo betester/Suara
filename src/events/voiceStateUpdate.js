@@ -3,8 +3,21 @@ var Mutex = require("async-mutex").Mutex;
 const mutex = new Mutex();
 
 // TODO: refactor
+// alur kode
+// 1. voiceState berubah, oldState, newState
+// 2. oldState == null && newState != null, baru join
+// 3. oldState != null && newState != null, oldState != newState, pindah channel
+// 3.1 oldState != null && newState != null, oldState == newState, deafen, dkk
+// 4. oldState != null && newState == null, user leave
+// Problem, 
+// discord js cuman ngasih tau user apa aja yang ada di suatu channel, tp g ngasih tau 
+// siapa yang pindah, problem kalau user baru join/left
+// Solusi sementara, simpan di redis
+
+
+
 const fetchChannel = (client, channelId, args, callback) => {
-  if (channelId == null) return;
+  if (!channelId) return;
   return client.channels
     .fetch(channelId)
     .then((channel) => callback(channel, args));
@@ -75,19 +88,19 @@ const sendJoinedUserMessage = (
   oldStateData
 ) => {
   try {
-    if (oldState.channelId == null && newStateData != null) {
+    if (!(oldState.channelId) && newStateData ) {
       client.channels.fetch(oldState.guild.systemChannelId).then((channel) => {
         channel.send(
           `${newStateData.username} joined ${newStateData.channelName} voice chat`
         );
       });
-    } else if (newState.channelId == null && oldStateData != null) {
+    } else if (!(newState.channelId)  && oldStateData ) {
       client.channels.fetch(newState.guild.systemChannelId).then((channel) => {
         channel.send(
           `${oldStateData.username} left ${oldStateData.channelName} voice chat`
         );
       });
-    } else if ((newStateData != null) & (oldStateData != null)) {
+    } else if (newStateData & oldStateData ) {
       client.channels.fetch(newState.guild.systemChannelId).then((channel) => {
         channel.send(
           `${newStateData.username} moved from ${oldStateData.channelName} to ${newStateData.channelName}`
