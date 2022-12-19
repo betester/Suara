@@ -6,7 +6,9 @@ const redis_password = process.env.REDIS_PASSWORD;
 const redis_username = process.env.REDIS_USERNAME;
 
 const client = createClient({
-  url: redis_url
+  url: redis_url,
+  password : redis_password,
+  username : redis_username
 });
 
 client.on("error", (err) => console.log("Redis Client Error", err));
