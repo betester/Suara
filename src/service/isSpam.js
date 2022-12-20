@@ -7,11 +7,11 @@ const lessThanMinute = (minute) => {
     }
 }
 
-const lessThan3Minute = lessThanMinute(3);
+const lessThan1Minute = lessThanMinute(1);
 
 const isSpam = (timeStamps) => {
-    if (timeStamps.length < 10) return false;
-    return timeStamps.every(lessThan3Minute);
+    if (timeStamps.length <= 5) return false;
+    return timeStamps.every(lessThan1Minute);
 }
 
 exports.isSpam = isSpam;

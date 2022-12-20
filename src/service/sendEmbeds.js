@@ -5,10 +5,11 @@ const sendEmbeds = (channel, userId, status, targetChannel, sourceChannel) => {
   let description = "";
   let color = "#0099ff";
 
-  const filteredUser = channel.members
-    .filter((member) => member.user.username === userId);
+  const filteredUser = channel.members.filter(
+    (member) => member.user.username === userId
+  );
 
-  const user = Array.from(filteredUser).map(([_, value]) => (value));
+  const user = Array.from(filteredUser).map(([_, value]) => value);
 
   if (status === "join") {
     description = `${userId} Joined ${targetChannel} voice chat`;
@@ -18,6 +19,9 @@ const sendEmbeds = (channel, userId, status, targetChannel, sourceChannel) => {
   } else if (status === "change") {
     description = `${userId} Moved from ${sourceChannel} to ${targetChannel} voice chat`;
     color = "#FFE15D";
+  } else if (status === "blocked") {
+    description = `${userId} have been blocked for 2 minutes due to spamming`;
+    color = "#DC0000";
   }
 
   try {
@@ -28,7 +32,7 @@ const sendEmbeds = (channel, userId, status, targetChannel, sourceChannel) => {
         name: userId,
       })
       .setDescription(description);
-    channel.send({ embeds: [messageEmbed] });
+      channel.send({ embeds: [messageEmbed] });
   } catch (e) {
     console.log(e);
   }

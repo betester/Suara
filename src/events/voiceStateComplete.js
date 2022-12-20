@@ -17,9 +17,10 @@ const { getLastTimeStamp } = require("../../database/service/getLastTimeStamp");
 const {
   saveUserJoinTimeStamp,
 } = require("../../database/service/saveUserJoinTimeStamp");
+const { handleSpam } = require("../service/handleSpam");
 const { isSpam } = require("../service/isSpam");
 
-module.exports = async (client,userId, guildId, channelId) => {
+module.exports = async (client,channel,userId, guildId, channelId) => {
   await saveUserJoinTimeStamp(userId, guildId, channelId);
   const last10TimeStamp = await getLastTimeStamp(
     userId,
@@ -29,5 +30,5 @@ module.exports = async (client,userId, guildId, channelId) => {
     "withscores"
   );
   if (isSpam(last10TimeStamp.map((value) => value.score)))
-    console.log("THIS IS A SPAM");
+    handleSpam(channel,userId,guildId);
 };
