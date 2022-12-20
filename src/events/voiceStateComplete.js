@@ -19,8 +19,15 @@ const {
 } = require("../../database/service/saveUserJoinTimeStamp");
 const { isSpam } = require("../service/isSpam");
 
-module.exports = async (timeStamp, userId, guildId, channelId) => {
-  await saveUserJoinTimeStamp(userId, guildId, channelId, timeStamp);
-  const last10TimeStamp = getLastTimeStamp(userId, guildId, 0, 10);
-  if (isSpam(last10TimeStamp)) console.log("THIS IS A SPAM");
+module.exports = async (client,userId, guildId, channelId) => {
+  await saveUserJoinTimeStamp(userId, guildId, channelId);
+  const last10TimeStamp = await getLastTimeStamp(
+    userId,
+    guildId,
+    0,
+    10,
+    "withscores"
+  );
+  if (isSpam(last10TimeStamp.map((value) => value.score)))
+    console.log("THIS IS A SPAM");
 };

@@ -12,11 +12,21 @@ const handleUserJoin = async (client, newState) => {
 
   const newUser = await addUser(
     newState.channelId,
-    newState.guildId,
+    newState.guild.id,
     currentUsersId
   );
 
-  newUser && sendEmbeds(channel, newUser, "join", newStatechannel.name);
+
+  if (newUser) {
+    sendEmbeds(channel, newUser, "join", newStatechannel.name);
+    client.emit(
+      "voiceStateComplete",
+      newUser,
+      newState.guild.id,
+      newState.channelId
+    );
+  }
+
   // simpan ke redis user yang baru join berdasarkan channelId dan guildId
   // send just joined channel message
 };
@@ -38,14 +48,14 @@ const handleUserOtherAction = async (client, newState, oldState) => {
   const oldChannelUserIds = oldStateChannel.members.map(
     (member) => member.user.username
   );
-  await removeUser(oldState.channelId, oldState.guildId, oldChannelUserIds);
+  await removeUser(oldState.channelId, oldState.guild.id, oldChannelUserIds);
   const newUser = await addUser(
     newState.channelId,
-    newState.guildId,
+    newState.guild.id,
     newChannelUserIds
   );
 
-  newUser &&
+  if (newUser) {
     sendEmbeds(
       channel,
       newUser,
@@ -53,6 +63,13 @@ const handleUserOtherAction = async (client, newState, oldState) => {
       newStateChannel.name,
       oldStateChannel.name
     );
+    client.emit(
+      "voiceStateComplete",
+      newUser,
+      newState.guild.id,
+      newState.channelId
+    );
+  }
 };
 
 const handleUserLeave = async (client, oldState) => {
@@ -64,11 +81,19 @@ const handleUserLeave = async (client, oldState) => {
   );
   const leavingUser = await removeUser(
     oldState.channelId,
-    oldState.guildId,
+    oldState.guild.id,
     currentUsersId
   );
 
-  leavingUser && sendEmbeds(channel, leavingUser, "left", oldChannel.name);
+  if (leavingUser) {
+    sendEmbeds(channel, leavingUser, "left", oldChannel.name);
+    client.emit(
+      "voiceStateComplete",
+      leavingUser,
+      oldState.guild.id,
+      oldState.channelId
+    );
+  }
 };
 
 module.exports = async (client, oldState, newState) => {
