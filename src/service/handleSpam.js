@@ -12,7 +12,6 @@ const handleSpam = async (channel, userId, guildId) => {
   try {
     if (!(await isUserBlocked(userId, guildId))) {
       await blockUser(userId, guildId);
-      deleteLastTimeStamp(userId,guildId,0,5);
       sendEmbeds(channel, userId, "blocked");
     }
   } catch (e) {

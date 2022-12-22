@@ -17,17 +17,16 @@ const handleUserJoin = async (client, newState) => {
     currentUsersId
   );
 
-  if (newUser) {
-    if (!(await isUserBlocked(newUser, newState.guild.id))) {
-      sendEmbeds(channel, newUser, "join", newStatechannel.name);
-      client.emit(
-        "voiceStateComplete",
-        channel,
-        newUser,
-        newState.guild.id,
-        newState.channelId
-      );
-    }
+  if (!(await isUserBlocked(newUser, newState.guild.id))) {
+    sendEmbeds(channel, newUser, "join", newStatechannel.name);
+    client.emit(
+      "voiceStateComplete",
+      channel,
+      newUser,
+      newState.guild.id,
+      newState.channelId,
+      "join"
+    );
   }
 
   // simpan ke redis user yang baru join berdasarkan channelId dan guildId
@@ -58,23 +57,22 @@ const handleUserOtherAction = async (client, newState, oldState) => {
     newChannelUserIds
   );
 
-  if (newUser) {
-    if (!(await isUserBlocked(newUser, newState.guild.id))) {
-      sendEmbeds(
-        channel,
-        newUser,
-        "change",
-        newStateChannel.name,
-        oldStateChannel.name
-      );
-      client.emit(
-        "voiceStateComplete",
-        channel,
-        newUser,
-        newState.guild.id,
-        newState.channelId
-      );
-    }
+  if (!(await isUserBlocked(newUser, newState.guild.id))) {
+    sendEmbeds(
+      channel,
+      newUser,
+      "change",
+      newStateChannel.name,
+      oldStateChannel.name
+    );
+    client.emit(
+      "voiceStateComplete",
+      channel,
+      newUser,
+      newState.guild.id,
+      newState.channelId,
+      "change"
+    );
   }
 };
 
@@ -88,20 +86,19 @@ const handleUserLeave = async (client, oldState) => {
   const leavingUser = await removeUser(
     oldState.channelId,
     oldState.guild.id,
-    currentUsersId
+    currentUsersId,
   );
 
-  if (leavingUser) {
-    if (!(await isUserBlocked(leavingUser, oldState.guild.id))) {
-      sendEmbeds(channel, leavingUser, "left", oldChannel.name);
-      client.emit(
-        "voiceStateComplete",
-        channel,
-        leavingUser,
-        oldState.guild.id,
-        oldState.channelId
-      );
-    }
+  if (!(await isUserBlocked(leavingUser, oldState.guild.id))) {
+    sendEmbeds(channel, leavingUser, "left", oldChannel.name);
+    client.emit(
+      "voiceStateComplete",
+      channel,
+      leavingUser,
+      oldState.guild.id,
+      oldState.channelId,
+      "left"
+    );
   }
 };
 
