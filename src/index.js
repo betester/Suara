@@ -3,6 +3,7 @@ const fs = require("fs");
 const config = require("../config.json");
 const { Client, Collection, GatewayIntentBits } = require("discord.js");
 const { redisClient } = require("../database/index.js");
+const { saveUserTimeStamp } = require("../database/service/saveUserTimeStamp");
 const token = process.env.BOT_TOKEN;
 const VOICE_CHAT_ID = 2;
 
@@ -25,6 +26,7 @@ const setRedisInitialValue = async (redisClient, channels) => {
     const channelId = channel.id;
     channel.members.forEach(async (member) => {
       await redisClient.sAdd(`${guildId}:${channelId}`, member.user.username);
+      await saveUserTimeStamp(member.user.username,guildId,channelId,0);
     });
   });
 };

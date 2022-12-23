@@ -9,6 +9,16 @@
             "database": "ikramullah",
             "username": "postgres",
             "name": "Ikramullah Database"
+        },
+        {
+            "previewLimit": 50,
+            "server": "db.eddcxxxakprqugvikwgp.supabase.co",
+            "port": 6543,
+            "askForPassword": true,
+            "driver": "PostgreSQL",
+            "name": "Supabase",
+            "database": "postgres",
+            "username": "postgres"
         }
     ]
 }
