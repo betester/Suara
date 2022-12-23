@@ -20,13 +20,13 @@ const {
 const { handleSpam } = require("../service/handleSpam");
 const { isSpam } = require("../service/isSpam");
 
-module.exports = async (_,channel,userId, guildId, channelId,status) => {
-  await saveUserJoinTimeStamp(userId, guildId, channelId,status);
+module.exports = async (client,channel,userId, guildId, channelId) => {
+  await saveUserJoinTimeStamp(userId, guildId, channelId);
   const last10TimeStamp = await getLastTimeStamp(
     userId,
     guildId,
     0,
-    5,
+    10,
     "withscores"
   );
   if (isSpam(last10TimeStamp.map((value) => value.score)))

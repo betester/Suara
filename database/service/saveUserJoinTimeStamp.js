@@ -1,9 +1,9 @@
 const { redisClient } = require("../index");
 
-const saveUserJoinTimeStamp = async (userId, guildId, channelId,status) => {
+const saveUserJoinTimeStamp = async (userId, guildId, channelId) => {
   try {
     const currentTime = Date.now();
-    await redisClient.zAdd(`t:${userId}:${guildId}:${status}`, {
+    await redisClient.zAdd(`${userId}:${guildId}`, {
       score: currentTime,
       value: `${channelId}:${currentTime}`,
     });
