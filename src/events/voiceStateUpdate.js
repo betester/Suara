@@ -1,6 +1,13 @@
 const { addUser } = require("../../database/service/addUser");
+const {
+  deleteUserTimeStamp,
+} = require("../../database/service/deleteUserTimeStamp");
 const { isUserBlocked } = require("../../database/service/isUserBlocked");
 const { removeUser } = require("../../database/service/removeUser");
+const {
+  saveUserTimeStamp,
+} = require("../../database/service/saveUserTimeStamp");
+const { saveUser } = require("../../prisma/service/saveUser");
 const { getChannel } = require("../service/getChannel");
 const { sendEmbeds } = require("../service/sendEmbeds");
 
@@ -16,6 +23,8 @@ const handleUserJoin = async (client, newState) => {
     newState.guild.id,
     currentUsersId
   );
+
+  saveUserTimeStamp(newUser, newState.guild.id, newState.channelId);
 
   if (newUser) {
     if (!(await isUserBlocked(newUser, newState.guild.id))) {
@@ -58,7 +67,13 @@ const handleUserOtherAction = async (client, newState, oldState) => {
     newChannelUserIds
   );
 
+
   if (newUser) {
+
+    const timeStamp = await deleteUserTimeStamp(newUser, oldState.guild.id, oldState.channelId);
+    saveUserTimeStamp(newUser, newState.guild.id, newState.channelId);
+    saveUser(newUser, timeStamp);
+
     if (!(await isUserBlocked(newUser, newState.guild.id))) {
       sendEmbeds(
         channel,
@@ -91,7 +106,15 @@ const handleUserLeave = async (client, oldState) => {
     currentUsersId
   );
 
+  // delete user time stamp, and do the updates
+
   if (leavingUser) {
+    const timeStamp = await deleteUserTimeStamp(
+      leavingUser,
+      oldState.guild.id,
+      oldState.channelId
+    );
+    saveUser(leavingUser, timeStamp);
     if (!(await isUserBlocked(leavingUser, oldState.guild.id))) {
       sendEmbeds(channel, leavingUser, "left", oldChannel.name);
       client.emit(
