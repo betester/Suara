@@ -10,7 +10,7 @@ const sendProfileEmbed = (channel, userId, timeSpent) => {
   );
 
   const user = Array.from(filteredUser).map(([_, value]) => value);
-  const formattedTime = moment(timeSpent).from(0).split(" ");
+  const formattedTime = moment(timeSpent).from(0).slice(3,);
   try {
     const messageEmbed = new EmbedBuilder()
       .setColor(color)
@@ -18,7 +18,7 @@ const sendProfileEmbed = (channel, userId, timeSpent) => {
       .setThumbnail(
         `https://cdn.discordapp.com/avatars/${user[0].user.id}/${user[0].user.avatar}.png`
       )
-      .addFields({ name: "Total Voice Chat Time", value: `${formattedTime[1]} ${formattedTime[2]}` });
+      .addFields({ name: "Total Voice Chat Time", value: `${formattedTime}` });
     channel.send({ embeds: [messageEmbed] });
   } catch (e) {
     console.log(e);

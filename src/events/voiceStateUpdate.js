@@ -114,6 +114,7 @@ const handleUserLeave = async (client, oldState) => {
       oldState.guild.id,
       oldState.channelId
     );
+
     saveUser(leavingUser, timeStamp);
     if (!(await isUserBlocked(leavingUser, oldState.guild.id))) {
       sendEmbeds(channel, leavingUser, "left", oldChannel.name);

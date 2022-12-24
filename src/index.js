@@ -26,7 +26,7 @@ const setRedisInitialValue = async (redisClient, channels) => {
     const channelId = channel.id;
     channel.members.forEach(async (member) => {
       await redisClient.sAdd(`${guildId}:${channelId}`, member.user.username);
-      await saveUserTimeStamp(member.user.username,guildId,channelId,0);
+      await saveUserTimeStamp(member.user.username,guildId,channelId);
     });
   });
 };

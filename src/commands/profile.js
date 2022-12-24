@@ -9,14 +9,19 @@ exports.run = async (_, message) => {
     const userId = message.author.username;
     const guildId =  message.guild.id
     const channel = message.member.voice.channel;
+    let user = await getUser(userId);
 
     if (channel) {
         const timeStamp = await getUserTimeStamp(userId,channel.id,guildId);
-        await saveUser(userId, Date.now() - parseInt(timeStamp));
+        console.log(user.timeSpent + Date.now() - timeStamp);
+        sendProfileEmbed(message.channel,userId,user.timeSpent + Date.now() - timeStamp);
     }
 
-    let user = await getUser(userId);
-    sendProfileEmbed(message.channel,userId,user.timeSpent);
+    else {
+      console.log(user.timeSpent);
+      sendProfileEmbed(message.channel,userId,user.timeSpent);
+    }
+
 
   } catch (e) {
     console.log(e);
