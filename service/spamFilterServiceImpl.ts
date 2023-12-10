@@ -1,6 +1,12 @@
+import { ILogger } from "js-logger";
 import { User } from "../models";
 import { SpamFilterService } from "./SpamFilterService";
 import { UserDataService } from "./userDataService";
+import jsLogger from "js-logger"
+
+jsLogger.useDefaults()
+
+const Logger : ILogger = jsLogger.get("spamFilterServiceImpl")
 
 export class SpamFilterServiceImpl implements SpamFilterService {
   private userDataService: UserDataService
@@ -16,7 +22,7 @@ export class SpamFilterServiceImpl implements SpamFilterService {
     const promise: Promise<boolean> = new Promise<boolean>(
       (resolve, reject) => {
         this.userDataService
-          .get(`${userId}:${guildId}`)
+          .get(this.getKey(userId, guildId))
           .then(user => {
             const totalAction: number = user.totalConsecutiveJoins
             resolve(this.spamThreshold < totalAction)
@@ -36,7 +42,7 @@ export class SpamFilterServiceImpl implements SpamFilterService {
       guildId,
       totalConsecutiveJoins: 1
     }
-    const spamKey: string = `${username}:${guildId}`
+    const spamKey: string =  this.getKey(username, guildId)   
     this.userDataService
       .get(spamKey)
       .then((existingUser) => {
@@ -44,8 +50,12 @@ export class SpamFilterServiceImpl implements SpamFilterService {
         this.userDataService.save(spamKey, user)
       })
       .catch((error) => {
+        Logger.error(error)
         this.userDataService.save(spamKey, user)
       })
   }
-
+  
+  private getKey(username : string, guildId : string) : string {
+    return `${username}:${guildId}`
+  }
 }
