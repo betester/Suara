@@ -1,7 +1,7 @@
 import { Client, TextChannel, VoiceState, VoiceChannel, EmbedBuilder, EmbedAuthorOptions } from "discord.js";
 import { UserAction } from "../enums";
 import jsLogger from 'js-logger'
-import { voiceChhannelEmbeds } from "../client/embeds";
+import { voiceChannelEmbeds } from "../client/embeds";
 
 jsLogger.useDefaults()
 const LOGGER = jsLogger.get("voiceChannelConsumer")
@@ -21,7 +21,7 @@ const consumeUserAction = (client: Client, voiceChannelState: VoiceState, action
             iconURL: user.avatarURL(),
             name: user.username
           }
-          const embeds: EmbedBuilder[] = [voiceChhannelEmbeds(action, description, author)]
+          const embeds: EmbedBuilder[] = [voiceChannelEmbeds(action, description, author)]
           systemChannel.send({ embeds })
         })
     })
@@ -38,9 +38,15 @@ export const voiceStateConsumer = (client: Client, voiceChannelOldState: VoiceSt
     return
   }
 
+  let voiceChannelState : VoiceState
+
   if (voiceChannelNewState.channel != null) {
+    voiceChannelState = voiceChannelNewState
     consumeUserAction(client, voiceChannelNewState, UserAction.JOIN)
   } else if (voiceChannelOldState.channel != null) {
+    voiceChannelState = voiceChannelOldState
     consumeUserAction(client, voiceChannelOldState, UserAction.LEAVE)
   }
+
+  client.emit("voiceStateComplete", voiceChannelState.id)
 }
