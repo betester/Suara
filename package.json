@@ -1,0 +1,22 @@
+{
+  "name": "suara",
+  "version": "1.0.1",
+  "description": "Discord bot related with voice chat",
+  "main": "index.ts",
+  "scripts": {
+    "dev": "npx nodemon",
+    "test": "test"
+  },
+  "author": "betester",
+  "license": "ISC",
+  "dependencies": {
+    "discord.js": "^14.14.1",
+    "js-cache": "^1.0.3",
+    "js-logger": "^1.6.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  }
+}
