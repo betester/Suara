@@ -3,7 +3,7 @@ import jsLogger from "js-logger"
 import { voiceStateConsumer, consumeVoiceStateComplete } from "./consumer"
 import {  LocalStorage, MemoryCache, SpamFilterService, SpamFilterServiceImpl, UserDataService, UserDataServiceImpl } from "./service"
 import { MemoryStorage } from "node-ts-cache-storage-memory"
-import { User } from "./models"
+import {  UserSpam } from "./models"
 
 const main = () => {
   jsLogger.useDefaults()
@@ -14,8 +14,8 @@ const main = () => {
   const TTL_SECONDS = 10
 
   const memoryCache: MemoryStorage = new MemoryStorage()
-  const cache: LocalStorage<User> = new MemoryCache<User>(memoryCache)
-  const userDataService : UserDataService = new UserDataServiceImpl(cache, TTL_SECONDS) 
+  const cache: LocalStorage<UserSpam> = new MemoryCache<UserSpam>(memoryCache)
+  const userDataService : UserDataService<UserSpam> = new UserDataServiceImpl(cache, TTL_SECONDS) 
   const spamFilterService : SpamFilterService = new SpamFilterServiceImpl(userDataService, SPAM_THRESHOLD)
 
   Logger.info("Configuring discord bot...")
