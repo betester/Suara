@@ -5,7 +5,7 @@ import { voiceChannelEmbeds } from "../client/embeds";
 import { SpamFilterService } from "../service";
 
 jsLogger.useDefaults()
-const LOGGER = jsLogger.get("voiceChannelConsumer")
+const Logger = jsLogger.get("voiceChannelConsumer")
 
 const consumeUserAction = (
   client: Client,
@@ -27,29 +27,30 @@ const consumeUserAction = (
             iconURL: user.avatarURL(),
             name: user.username
           }
+          const embeds: EmbedBuilder[] = [voiceChannelEmbeds(action, description, author)]
           spamFilterSerivice
             .isSpamming(user.id, voiceChannelState.guild.id)
             .then(userIsSpamming => {
               if (!userIsSpamming) {
-                const embeds: EmbedBuilder[] = [voiceChannelEmbeds(action, description, author)]
                 systemChannel.send({ embeds })
               }
             })
             .catch(error => {
-              LOGGER.error(error)
+              Logger.error(error)
+              systemChannel.send({ embeds })
             })
 
         })
     })
     .catch((error) => {
-      LOGGER.error(error)
+      Logger.error(error)
     })
 }
 export const voiceStateConsumer = (
-  client: Client, 
-  voiceChannelOldState: VoiceState, 
+  client: Client,
+  voiceChannelOldState: VoiceState,
   voiceChannelNewState: VoiceState,
-  spamFilterService : SpamFilterService
+  spamFilterService: SpamFilterService
 ) => {
 
   // the user could have been mute, deafen, and any other action
