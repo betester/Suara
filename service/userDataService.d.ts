@@ -1,6 +1,6 @@
 import { User } from "../models";
 
 interface UserDataService {
-  save : (user : User) => void
-  get : (username : string, guildId : string) => Promise<User|null>
+  save : (key : string, user: User) => void
+  get : (key : string) => Promise<User|null>
 }

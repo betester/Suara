@@ -35,7 +35,7 @@ const main = () => {
       voiceStateConsumer(client, oldVoiceChannelState, newVoiceChannelState, spamFilterService)
     })
     client.on("voiceStateComplete", (userId: string, guildId : string) => {
-      consumeVoiceStateComplete(userId, guildId, userDataService)
+      consumeVoiceStateComplete(userId, guildId, spamFilterService)
     })
   })
 
