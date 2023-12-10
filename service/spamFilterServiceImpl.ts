@@ -1,6 +1,6 @@
 import { ILogger } from "js-logger";
-import { User } from "../models";
-import { SpamFilterService } from "./SpamFilterService";
+import { User, UserSpam } from "../models";
+import { SpamFilterService } from "./spamFilterService";
 import { UserDataService } from "./userDataService";
 import jsLogger from "js-logger"
 
@@ -9,10 +9,10 @@ jsLogger.useDefaults()
 const Logger : ILogger = jsLogger.get("spamFilterServiceImpl")
 
 export class SpamFilterServiceImpl implements SpamFilterService {
-  private userDataService: UserDataService
+  private userDataService: UserDataService<UserSpam>
   private spamThreshold: number
 
-  public constructor(userDataService: UserDataService, spamThreshold: number) {
+  public constructor(userDataService: UserDataService<UserSpam>, spamThreshold: number) {
     this.userDataService = userDataService
     this.spamThreshold = spamThreshold
   }
@@ -37,7 +37,7 @@ export class SpamFilterServiceImpl implements SpamFilterService {
 
   public countUserJoinOccurence(username: string, guildId: string) {
 
-    const user: User = {
+    const user: UserSpam = {
       username,
       guildId,
       totalConsecutiveJoins: 1
