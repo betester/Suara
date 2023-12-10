@@ -21,7 +21,6 @@ export const consumeVoiceStateComplete = (
       .get(username, guildId)
       .then((existingUser) => {
         user.totalConsecutiveJoins += existingUser.totalConsecutiveJoins
-        Logger.debug(user)
         userDataService.save(user)
       })
       .catch((error) => {
