@@ -1,19 +1,24 @@
 import { Client, ClientOptions, GatewayIntentBits, VoiceState } from "discord.js"
 import jsLogger from "js-logger"
-import { voiceStateConsumer } from "./consumer"
-import {  MemoryCache } from "./service"
+import { voiceStateConsumer, consumeVoiceStateComplete } from "./consumer"
+import {  LocalStorage, MemoryCache, SpamFilterService, SpamFilterServiceImpl, UserDataService, UserDataServiceImpl } from "./service"
 import { MemoryStorage } from "node-ts-cache-storage-memory"
+import { User } from "./models"
 
 const main = () => {
   jsLogger.useDefaults()
 
-  const LOGGER = jsLogger.get("main")
+  const Logger = jsLogger.get("main")
   const TOKEN = process.env.DISCORD_BOT_TOKEN
+  const SPAM_THRESHOLD = 5
+  const TTL_SECONDS = 10
 
   const memoryCache: MemoryStorage = new MemoryStorage()
-  const cache: MemoryCache<string> = new MemoryCache<string>(memoryCache)
+  const cache: LocalStorage<User> = new MemoryCache<User>(memoryCache)
+  const userDataService : UserDataService = new UserDataServiceImpl(cache, TTL_SECONDS) 
+  const spamFilterService : SpamFilterService = new SpamFilterServiceImpl(userDataService, SPAM_THRESHOLD)
 
-  LOGGER.info("Configuring discord bot...")
+  Logger.info("Configuring discord bot...")
 
   const clientOptions: ClientOptions = {
     intents: [
@@ -25,12 +30,12 @@ const main = () => {
   const client: Client = new Client(clientOptions)
 
   client.on("ready", () => {
-    LOGGER.info("Bot is ready 🚀")
+    Logger.info("Bot is ready 🚀")
     client.on("voiceStateUpdate", (oldVoiceChannelState: VoiceState, newVoiceChannelState: VoiceState) => {
-      voiceStateConsumer(client, oldVoiceChannelState, newVoiceChannelState)
+      voiceStateConsumer(client, oldVoiceChannelState, newVoiceChannelState, spamFilterService)
     })
-    client.on("voiceStateComplete", (userId: string) => {
-      LOGGER.debug(userId)
+    client.on("voiceStateComplete", (userId: string, guildId : string) => {
+      consumeVoiceStateComplete(userId, guildId, userDataService)
     })
   })
 

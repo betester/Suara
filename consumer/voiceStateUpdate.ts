@@ -2,11 +2,17 @@ import { Client, TextChannel, VoiceState, VoiceChannel, EmbedBuilder, EmbedAutho
 import { UserAction } from "../enums";
 import jsLogger from 'js-logger'
 import { voiceChannelEmbeds } from "../client/embeds";
+import { SpamFilterService } from "../service";
 
 jsLogger.useDefaults()
 const LOGGER = jsLogger.get("voiceChannelConsumer")
 
-const consumeUserAction = (client: Client, voiceChannelState: VoiceState, action: UserAction) => {
+const consumeUserAction = (
+  client: Client,
+  voiceChannelState: VoiceState,
+  action: UserAction,
+  spamFilterSerivice: SpamFilterService
+) => {
 
   const systemChannel: TextChannel = voiceChannelState.guild.systemChannel
 
@@ -16,20 +22,35 @@ const consumeUserAction = (client: Client, voiceChannelState: VoiceState, action
       client.channels
         .fetch(voiceChannelState.channelId)
         .then((channel: VoiceChannel) => {
-          const description: string = `${user.username} ${action} ${channel.name} voice chat`
+          const description: string = `${action} ${channel.name} voice chat`
           const author: EmbedAuthorOptions = {
             iconURL: user.avatarURL(),
             name: user.username
           }
-          const embeds: EmbedBuilder[] = [voiceChannelEmbeds(action, description, author)]
-          systemChannel.send({ embeds })
+          spamFilterSerivice
+            .isSpamming(user.id, voiceChannelState.guild.id)
+            .then(userIsSpamming => {
+              if (!userIsSpamming) {
+                const embeds: EmbedBuilder[] = [voiceChannelEmbeds(action, description, author)]
+                systemChannel.send({ embeds })
+              }
+            })
+            .catch(error => {
+              LOGGER.error(error)
+            })
+
         })
     })
     .catch((error) => {
       LOGGER.error(error)
     })
 }
-export const voiceStateConsumer = (client: Client, voiceChannelOldState: VoiceState, voiceChannelNewState: VoiceState) => {
+export const voiceStateConsumer = (
+  client: Client, 
+  voiceChannelOldState: VoiceState, 
+  voiceChannelNewState: VoiceState,
+  spamFilterService : SpamFilterService
+) => {
 
   // the user could have been mute, deafen, and any other action
   const otherVoiceChannelAction: boolean = voiceChannelOldState.channel == voiceChannelNewState.channel
@@ -38,15 +59,15 @@ export const voiceStateConsumer = (client: Client, voiceChannelOldState: VoiceSt
     return
   }
 
-  let voiceChannelState : VoiceState
+  let voiceChannelState: VoiceState
 
   if (voiceChannelNewState.channel != null) {
     voiceChannelState = voiceChannelNewState
-    consumeUserAction(client, voiceChannelNewState, UserAction.JOIN)
+    consumeUserAction(client, voiceChannelNewState, UserAction.JOIN, spamFilterService)
   } else if (voiceChannelOldState.channel != null) {
     voiceChannelState = voiceChannelOldState
-    consumeUserAction(client, voiceChannelOldState, UserAction.LEAVE)
+    consumeUserAction(client, voiceChannelOldState, UserAction.LEAVE, spamFilterService)
   }
 
-  client.emit("voiceStateComplete", voiceChannelState.id)
+  client.emit("voiceStateComplete", voiceChannelState.id, voiceChannelState.guild.id)
 }
