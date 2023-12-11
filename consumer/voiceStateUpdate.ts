@@ -2,7 +2,7 @@ import { Client, TextChannel, VoiceState, VoiceChannel, EmbedBuilder, EmbedAutho
 import { UserAction } from "../enums";
 import jsLogger from 'js-logger'
 import { voiceChannelEmbeds } from "../client/embeds";
-import { SpamFilterService } from "../service";
+import { SpamFilterService, UserProfileService } from "../service";
 
 jsLogger.useDefaults()
 const Logger = jsLogger.get("voiceChannelConsumer")
@@ -11,7 +11,8 @@ const consumeUserAction = (
   client: Client,
   voiceChannelState: VoiceState,
   action: UserAction,
-  spamFilterSerivice: SpamFilterService
+  spamFilterSerivice: SpamFilterService,
+  userProfileService : UserProfileService
 ) => {
 
   const systemChannel: TextChannel = voiceChannelState.guild.systemChannel
@@ -19,6 +20,7 @@ const consumeUserAction = (
   client.users
     .fetch(voiceChannelState.id)
     .then((user) => {
+      userProfileService.saveByUserAction(user.id, action)
       client.channels
         .fetch(voiceChannelState.channelId)
         .then((channel: VoiceChannel) => {
@@ -50,7 +52,8 @@ export const voiceStateConsumer = (
   client: Client,
   voiceChannelOldState: VoiceState,
   voiceChannelNewState: VoiceState,
-  spamFilterService: SpamFilterService
+  spamFilterService: SpamFilterService,
+  userProfileService : UserProfileService
 ) => {
 
   // the user could have been mute, deafen, and any other action
@@ -64,10 +67,10 @@ export const voiceStateConsumer = (
 
   if (voiceChannelNewState.channel != null) {
     voiceChannelState = voiceChannelNewState
-    consumeUserAction(client, voiceChannelNewState, UserAction.JOIN, spamFilterService)
+    consumeUserAction(client, voiceChannelNewState, UserAction.JOIN, spamFilterService, userProfileService)
   } else if (voiceChannelOldState.channel != null) {
     voiceChannelState = voiceChannelOldState
-    consumeUserAction(client, voiceChannelOldState, UserAction.LEAVE, spamFilterService)
+    consumeUserAction(client, voiceChannelOldState, UserAction.LEAVE, spamFilterService, userProfileService)
   }
 
   client.emit("voiceStateComplete", voiceChannelState.id, voiceChannelState.guild.id)
