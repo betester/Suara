@@ -20,7 +20,7 @@ const consumeUserAction = (
   client.users
     .fetch(voiceChannelState.id)
     .then((user) => {
-      userProfileService.saveByUserAction(user.id, action)
+      userProfileService.save(user.id)
       client.channels
         .fetch(voiceChannelState.channelId)
         .then((channel: VoiceChannel) => {

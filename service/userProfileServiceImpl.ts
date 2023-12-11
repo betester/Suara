@@ -1,7 +1,11 @@
-import { UserAction } from "../enums";
-import {  UserProfile } from "../models";
+import { UserProfile } from "../models";
 import { UserDataService } from "./userDataService";
 import { UserProfileService } from "./userProfileService";
+import jsLogger, { ILogger } from "js-logger"
+
+jsLogger.useDefaults()
+
+const Logger: ILogger = jsLogger.get("userProfileServiceImpl")
 
 export class UserProfileServiceImpl implements UserProfileService {
 
@@ -11,27 +15,26 @@ export class UserProfileServiceImpl implements UserProfileService {
     this.userDataService = userDataService
   }
 
-  public async saveByUserAction(username : string, userAction: UserAction) {
-    const previousProfile : UserProfile = await this.get(username)
-    const previousTotalTimeSpent : number = previousProfile != null ? previousProfile.totalTimeSpent : 0
-    // consider using another abstraction to handle if else to avoid long branching
-    if (userAction == UserAction.JOIN) {
-      const userProfile : UserProfile = {
-        username : username,
-        totalTimeSpent : previousTotalTimeSpent, 
-        lastTimeJoined : Date.now()
-      }
-      this.userDataService.save(username, userProfile)
-    } else if (userAction == UserAction.LEAVE) {
-      const userProfile : UserProfile = {
-        username : username,
-        totalTimeSpent : previousTotalTimeSpent + Date.now() - previousProfile.lastTimeJoined, 
-        lastTimeJoined : Date.now()
-      }
-      this.userDataService.save(username, userProfile)
-    }
+  public save(userId: string) {
+    this.get(userId)
+      .then(previousProfile => {
+        const userProfile: UserProfile = {
+          username: userId,
+          totalTimeSpent: previousProfile == null ? 0 : previousProfile.totalTimeSpent + Date.now() - previousProfile.lastTimeJoined,
+          lastTimeJoined: Date.now()
+        }
+        this.userDataService.save(userId, userProfile)
+      })
+      .catch(error => {
+        Logger.error(error)
+      })
+
   }
   public get(userId: string): Promise<UserProfile> {
-    return this.userDataService.get(userId)
+    try {
+      return this.userDataService.get(userId)
+    } catch (error) {
+      return Promise.reject(error)
+    }
   }
 }
