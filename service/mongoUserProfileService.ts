@@ -1,22 +1,20 @@
-import { Db, MongoClient } from "mongodb";
-import { UserProfileService } from "./userProfileService";
 import { UserProfile } from "../models";
+import { UserDataService } from "./userDataService";
+import { UserProfileService } from "./userProfileService";
 
-const userProfileCollectionName : string = "userProfile"
+export class UserProfileServiceImpl implements UserProfileService {
 
-export class MongoUserProfileService implements UserProfileService {
-  private client : MongoClient
+  private userDataService: UserDataService<UserProfile>
 
-  constructor(client : MongoClient) {
-    this.client = client
-  }
-  
-  public save(userProfile : UserProfile) {
-    const db : Db = this.client.db()
-    const collection = db.collection(userProfileCollectionName)
-    collection.insertOne(userProfile)
+  constructor(userDataService: UserDataService<UserProfile>) {
+    this.userDataService = userDataService
   }
 
-  public get(userId : string) : Promise<UserProfile | null> {
+  public save(userProfile: UserProfile) {
+    this.userDataService.save(userProfile.username, userProfile)
+  }
+
+  public get(userId: string) : Promise<UserProfile> {
+    return this.userDataService.get(userId)
   }
 }

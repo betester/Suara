@@ -22,13 +22,11 @@ export class MongoUserDataServiceImpl<T extends User> implements UserDataService
   public save(key: string, user: T) {
     const db = this.mongoClient.db(this.dbName)
     const userCollection = db.collection(this.collectionName)
-    const userDocument = {
-      _id: new ObjectId(key),
-      ...user
-    }
+    const filter = { _id: new ObjectId(key) };
+    const update = { $set: { ...user } };
 
     userCollection
-      .insertOne(userDocument)
+      .updateOne(filter, update, { upsert: true })
       .catch(error => {
         Logger.error(error)
       })
