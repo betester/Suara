@@ -11,8 +11,7 @@ const consumeUserAction = (
   client: Client,
   voiceChannelState: VoiceState,
   action: UserAction,
-  spamFilterSerivice: SpamFilterService,
-  userProfileService : UserProfileService
+  spamFilterSerivice: SpamFilterService
 ) => {
 
   const systemChannel: TextChannel = voiceChannelState.guild.systemChannel
@@ -20,7 +19,6 @@ const consumeUserAction = (
   client.users
     .fetch(voiceChannelState.id)
     .then((user) => {
-      userProfileService.save(user.id)
       client.channels
         .fetch(voiceChannelState.channelId)
         .then((channel: VoiceChannel) => {
@@ -52,8 +50,7 @@ export const voiceStateConsumer = (
   client: Client,
   voiceChannelOldState: VoiceState,
   voiceChannelNewState: VoiceState,
-  spamFilterService: SpamFilterService,
-  userProfileService : UserProfileService
+  spamFilterService: SpamFilterService
 ) => {
 
   // the user could have been mute, deafen, and any other action
@@ -67,10 +64,10 @@ export const voiceStateConsumer = (
 
   if (voiceChannelNewState.channel != null) {
     voiceChannelState = voiceChannelNewState
-    consumeUserAction(client, voiceChannelNewState, UserAction.JOIN, spamFilterService, userProfileService)
+    consumeUserAction(client, voiceChannelNewState, UserAction.JOIN, spamFilterService)
   } else if (voiceChannelOldState.channel != null) {
     voiceChannelState = voiceChannelOldState
-    consumeUserAction(client, voiceChannelOldState, UserAction.LEAVE, spamFilterService, userProfileService)
+    consumeUserAction(client, voiceChannelOldState, UserAction.LEAVE, spamFilterService)
   }
 
   client.emit("voiceStateComplete", voiceChannelState.id, voiceChannelState.guild.id)

@@ -63,10 +63,10 @@ const main = () => {
   })
 
   client.on("voiceStateUpdate", (oldVoiceChannelState: VoiceState, newVoiceChannelState: VoiceState) => {
-    voiceStateConsumer(client, oldVoiceChannelState, newVoiceChannelState, spamFilterService, userProfileService)
+    voiceStateConsumer(client, oldVoiceChannelState, newVoiceChannelState, spamFilterService)
   })
   client.on("voiceStateComplete", (userId: string, guildId: string) => {
-    consumeVoiceStateComplete(userId, guildId, spamFilterService)
+    consumeVoiceStateComplete(userId, guildId, spamFilterService, userProfileService)
   })
   client.login(TOKEN)
 

@@ -1,16 +1,19 @@
-import { SpamFilterService } from "../service";
+import { SpamFilterService, UserProfileService } from "../service";
 import jsLogger, { ILogger } from "js-logger"
 
 jsLogger.useDefaults()
 const Logger: ILogger = jsLogger.get("consumeVoiceStateComplete")
 
 export const consumeVoiceStateComplete = (
-  username: string,
+  userId: string,
   guildId : string,
-  spamFilterService : SpamFilterService) => {
+  spamFilterService : SpamFilterService,
+  userProfileService : UserProfileService
+) => {
 
   try {
-    spamFilterService.countUserJoinOccurence(username, guildId)
+    spamFilterService.countUserJoinOccurence(userId, guildId)
+    userProfileService.save(userId)
   } catch (error) {
     Logger.error(error)
   }
