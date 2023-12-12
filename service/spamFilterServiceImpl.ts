@@ -2,60 +2,61 @@ import { ILogger } from "js-logger";
 import { User, UserSpam } from "../models";
 import { SpamFilterService } from "./spamFilterService";
 import { UserDataService } from "./userDataService";
-import jsLogger from "js-logger"
+import jsLogger from "js-logger";
 
-jsLogger.useDefaults()
+jsLogger.useDefaults();
 
-const Logger : ILogger = jsLogger.get("spamFilterServiceImpl")
+const Logger: ILogger = jsLogger.get("spamFilterServiceImpl");
 
 export class SpamFilterServiceImpl implements SpamFilterService {
-  private userDataService: UserDataService<UserSpam>
-  private spamThreshold: number
+  private userDataService: UserDataService<UserSpam>;
+  private spamThreshold: number;
 
-  public constructor(userDataService: UserDataService<UserSpam>, spamThreshold: number) {
-    this.userDataService = userDataService
-    this.spamThreshold = spamThreshold
+  public constructor(
+    userDataService: UserDataService<UserSpam>,
+    spamThreshold: number,
+  ) {
+    this.userDataService = userDataService;
+    this.spamThreshold = spamThreshold;
   }
 
   public isSpamming(userId: string, guildId: string): Promise<boolean> {
-
     const promise: Promise<boolean> = new Promise<boolean>(
       (resolve, reject) => {
         this.userDataService
           .get(this.getKey(userId, guildId))
-          .then(user => {
-            const totalAction: number = user.totalConsecutiveJoins
-            resolve(this.spamThreshold < totalAction)
+          .then((user) => {
+            const totalAction: number = user.totalConsecutiveJoins;
+            resolve(this.spamThreshold < totalAction);
           })
-          .catch(error => {
-            reject(error)
-          })
-      }
-    )
-    return promise
+          .catch((error) => {
+            reject(error);
+          });
+      },
+    );
+    return promise;
   }
 
   public countUserJoinOccurence(username: string, guildId: string) {
-
     const user: UserSpam = {
       username,
       guildId,
-      totalConsecutiveJoins: 1
-    }
-    const spamKey: string =  this.getKey(username, guildId)   
+      totalConsecutiveJoins: 1,
+    };
+    const spamKey: string = this.getKey(username, guildId);
     this.userDataService
       .get(spamKey)
       .then((existingUser) => {
-        user.totalConsecutiveJoins += existingUser.totalConsecutiveJoins
-        this.userDataService.save(spamKey, user)
+        user.totalConsecutiveJoins += existingUser.totalConsecutiveJoins;
+        this.userDataService.save(spamKey, user);
       })
       .catch((error) => {
-        Logger.error(error)
-        this.userDataService.save(spamKey, user)
-      })
+        Logger.error(error);
+        this.userDataService.save(spamKey, user);
+      });
   }
-  
-  private getKey(username : string, guildId : string) : string {
-    return `${username}:${guildId}`
+
+  private getKey(username: string, guildId: string): string {
+    return `${username}:${guildId}`;
   }
 }
