@@ -16,6 +16,7 @@ import { UserProfile, UserSpam } from "./models"
 import { MongoClient } from "mongodb"
 import { MongoUserDataServiceImpl } from "./service/mongoUserDataServiceImpl"
 import { Command, CommandName, ProfileCommand, commands } from "./commands"
+import { UserAction } from "./enums"
 
 const main = () => {
   jsLogger.useDefaults()
@@ -45,10 +46,10 @@ const main = () => {
 
   const spamFilterService: SpamFilterService = new SpamFilterServiceImpl(userDataService, SPAM_THRESHOLD)
   const userProfileService: UserProfileService = new UserProfileServiceImpl(userProfileDataService)
-  
-  const profileCommand : Command = new ProfileCommand(userProfileService)
-  
-  const commandMap : Map<CommandName, Command> = new Map< CommandName, Command>() 
+
+  const profileCommand: Command = new ProfileCommand(userProfileService)
+
+  const commandMap: Map<CommandName, Command> = new Map<CommandName, Command>()
   commandMap.set("profile", profileCommand)
 
   Logger.info("Configuring discord bot...")
@@ -70,8 +71,8 @@ const main = () => {
   client.on("voiceStateUpdate", (oldVoiceChannelState: VoiceState, newVoiceChannelState: VoiceState) => {
     voiceStateConsumer(client, oldVoiceChannelState, newVoiceChannelState, spamFilterService)
   })
-  client.on("voiceStateComplete", (userId: string, guildId: string) => {
-    consumeVoiceStateComplete(userId, guildId, spamFilterService, userProfileService)
+  client.on("voiceStateComplete", (userId: string, guildId: string, userAction: UserAction) => {
+    consumeVoiceStateComplete(userId, guildId, userAction, spamFilterService, userProfileService)
   })
   client.on("interactionCreate", interaction => {
     if (interaction.isCommand()) {
@@ -89,7 +90,7 @@ const main = () => {
       Routes.applicationCommands(CLIENT_ID),
       { body: commands }
     )
-    .then( _ => {
+    .then(_ => {
       Logger.info("Commands are set 🫡, here are the following commands")
       commands.forEach(command => {
         Logger.info(command)

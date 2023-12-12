@@ -16,14 +16,17 @@ export class UserProfileServiceImpl implements UserProfileService {
     this.userDataService = userDataService
   }
 
-  public save(userId: string, userAction: UserAction) {
+  public save(userProfile : UserProfile) {
+    this.userDataService.save(userProfile.username, userProfile)
+  }
+
+  public saveByUserAction(userId: string, userAction: UserAction) {
     this.get(userId)
       .then(previousProfile => {
-        this.userDataService.save(
-          userId,
+        this.save(
           this.getUserProfile(
-            userId, 
-            previousProfile, 
+            userId,
+            previousProfile,
             userAction
           )
         )
