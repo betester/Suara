@@ -2,7 +2,7 @@ import { Client, TextChannel, VoiceState, VoiceChannel, EmbedBuilder, EmbedAutho
 import { UserAction } from "../enums";
 import jsLogger from 'js-logger'
 import { voiceChannelEmbeds } from "../client/embeds";
-import { SpamFilterService } from "../service";
+import { SpamFilterService, UserProfileService } from "../service";
 
 jsLogger.useDefaults()
 const Logger = jsLogger.get("voiceChannelConsumer")
@@ -61,14 +61,22 @@ export const voiceStateConsumer = (
   }
 
   let voiceChannelState: VoiceState
+  let userAction : UserAction
 
   if (voiceChannelNewState.channel != null) {
     voiceChannelState = voiceChannelNewState
-    consumeUserAction(client, voiceChannelNewState, UserAction.JOIN, spamFilterService)
+    userAction = UserAction.JOIN
+    consumeUserAction(client, voiceChannelNewState, userAction, spamFilterService)
   } else if (voiceChannelOldState.channel != null) {
     voiceChannelState = voiceChannelOldState
-    consumeUserAction(client, voiceChannelOldState, UserAction.LEAVE, spamFilterService)
+    userAction = UserAction.LEAVE
+    consumeUserAction(client, voiceChannelOldState, userAction, spamFilterService)
   }
 
-  client.emit("voiceStateComplete", voiceChannelState.id, voiceChannelState.guild.id)
+  client.emit(
+    "voiceStateComplete", 
+    voiceChannelState.id, 
+    voiceChannelState.guild.id, 
+    userAction
+  )
 }

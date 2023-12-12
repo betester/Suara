@@ -1,24 +1,30 @@
-import { User } from "../models";
-import { SpamFilterService } from "./SpamFilterService";
+import { ILogger } from "js-logger";
+import { User, UserSpam } from "../models";
+import { SpamFilterService } from "./spamFilterService";
 import { UserDataService } from "./userDataService";
+import jsLogger from "js-logger"
+
+jsLogger.useDefaults()
+
+const Logger : ILogger = jsLogger.get("spamFilterServiceImpl")
 
 export class SpamFilterServiceImpl implements SpamFilterService {
-  private userDataService: UserDataService
-  private spamThreshold : number
+  private userDataService: UserDataService<UserSpam>
+  private spamThreshold: number
 
-  public constructor(userDataService: UserDataService, spamThreshold : number) {
+  public constructor(userDataService: UserDataService<UserSpam>, spamThreshold: number) {
     this.userDataService = userDataService
     this.spamThreshold = spamThreshold
   }
 
-  public isSpamming(userId : string, guildId : string): Promise<boolean> {
+  public isSpamming(userId: string, guildId: string): Promise<boolean> {
 
     const promise: Promise<boolean> = new Promise<boolean>(
       (resolve, reject) => {
         this.userDataService
-          .get(userId, guildId)
+          .get(this.getKey(userId, guildId))
           .then(user => {
-            const totalAction : number = user.totalConsecutiveJoins
+            const totalAction: number = user.totalConsecutiveJoins
             resolve(this.spamThreshold < totalAction)
           })
           .catch(error => {
@@ -27,5 +33,29 @@ export class SpamFilterServiceImpl implements SpamFilterService {
       }
     )
     return promise
+  }
+
+  public countUserJoinOccurence(username: string, guildId: string) {
+
+    const user: UserSpam = {
+      username,
+      guildId,
+      totalConsecutiveJoins: 1
+    }
+    const spamKey: string =  this.getKey(username, guildId)   
+    this.userDataService
+      .get(spamKey)
+      .then((existingUser) => {
+        user.totalConsecutiveJoins += existingUser.totalConsecutiveJoins
+        this.userDataService.save(spamKey, user)
+      })
+      .catch((error) => {
+        Logger.error(error)
+        this.userDataService.save(spamKey, user)
+      })
+  }
+  
+  private getKey(username : string, guildId : string) : string {
+    return `${username}:${guildId}`
   }
 }

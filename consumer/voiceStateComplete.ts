@@ -1,33 +1,21 @@
-import { User } from "../models";
-import { UserDataService } from "../service";
+import { UserAction } from "../enums";
+import { SpamFilterService, UserProfileService } from "../service";
 import jsLogger, { ILogger } from "js-logger"
 
 jsLogger.useDefaults()
 const Logger: ILogger = jsLogger.get("consumeVoiceStateComplete")
 
 export const consumeVoiceStateComplete = (
-  username: string,
+  userId: string,
   guildId : string,
-  userDataService: UserDataService) => {
-
-  const user: User = {
-    username,
-    guildId,
-    totalConsecutiveJoins: 1
-  }
+  userAction : UserAction,
+  spamFilterService : SpamFilterService,
+  userProfileService : UserProfileService
+) => {
 
   try {
-    userDataService
-      .get(username, guildId)
-      .then((existingUser) => {
-        user.totalConsecutiveJoins += existingUser.totalConsecutiveJoins
-        userDataService.save(user)
-      })
-      .catch((error) => {
-        Logger.error(error)
-        userDataService.save(user)
-      })
-
+    spamFilterService.countUserJoinOccurence(userId, guildId)
+    userProfileService.saveByUserAction(userId, userAction)
   } catch (error) {
     Logger.error(error)
   }
