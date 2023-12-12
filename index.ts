@@ -15,7 +15,7 @@ import { MemoryStorage } from "node-ts-cache-storage-memory"
 import { UserProfile, UserSpam } from "./models"
 import { MongoClient } from "mongodb"
 import { MongoUserDataServiceImpl } from "./service/mongoUserDataServiceImpl"
-import { commands } from "./commands"
+import { Command, CommandName, ProfileCommand, commands } from "./commands"
 
 const main = () => {
   jsLogger.useDefaults()
@@ -45,6 +45,11 @@ const main = () => {
 
   const spamFilterService: SpamFilterService = new SpamFilterServiceImpl(userDataService, SPAM_THRESHOLD)
   const userProfileService: UserProfileService = new UserProfileServiceImpl(userProfileDataService)
+  
+  const profileCommand : Command = new ProfileCommand(userProfileService)
+  
+  const commandMap : Map<CommandName, Command> = new Map< CommandName, Command>() 
+  commandMap.set("profile", profileCommand)
 
   Logger.info("Configuring discord bot...")
 
@@ -68,6 +73,12 @@ const main = () => {
   client.on("voiceStateComplete", (userId: string, guildId: string) => {
     consumeVoiceStateComplete(userId, guildId, spamFilterService, userProfileService)
   })
+  client.on("interactionCreate", interaction => {
+    if (interaction.isCommand()) {
+      commandMap.get(interaction.commandName as CommandName).execute(interaction)
+    }
+  })
+
   client.login(TOKEN)
 
   Logger.info("Configuring commands...")

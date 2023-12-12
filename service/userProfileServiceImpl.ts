@@ -49,6 +49,7 @@ export class UserProfileServiceImpl implements UserProfileService {
     if (previousProfile != null) {
       const { lastTimeJoined, totalTimeSpent, lastUserAction } = previousProfile
       newTotalTimeSpent = totalTimeSpent
+      // ensure that if the machine were to died, it will keep track the correct time
       if (lastUserAction == UserAction.JOIN && currentAction == UserAction.LEAVE) {
         newTotalTimeSpent += currentTime - lastTimeJoined
       }
