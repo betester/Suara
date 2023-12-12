@@ -1,5 +1,5 @@
 import { CacheType, CommandInteraction } from "discord.js";
 
 export interface Command {
-  execute : (interaction : CommandInteraction<CacheType>) => void
+  execute: (interaction: CommandInteraction<CacheType>) => void;
 }

@@ -1,1 +1,1 @@
-export * from './voiceChannelEmbeds'
+export * from "./voiceChannelEmbeds";

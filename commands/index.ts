@@ -1,17 +1,16 @@
+export { Command } from "./command";
+export * from "./profile";
 
-export { Command } from './command'
-export * from './profile'
-
-export type CommandName = "profile" 
+export type CommandName = "profile";
 
 interface CommandDescription {
-  name : CommandName 
-  description : string 
+  name: CommandName;
+  description: string;
 }
 
-export const commands : CommandDescription[] = [
+export const commands: CommandDescription[] = [
   {
-    name : "profile",
-    description : "Shows how much time have you spent on voice chat!"
-  }
-]
+    name: "profile",
+    description: "Shows how much time have you spent on voice chat!",
+  },
+];

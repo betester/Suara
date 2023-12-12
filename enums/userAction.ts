@@ -1,7 +1,4 @@
-
 export enum UserAction {
   JOIN = "join",
-  LEAVE = "leave"
+  LEAVE = "leave",
 }
-
-
