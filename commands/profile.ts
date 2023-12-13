@@ -1,7 +1,6 @@
 import {
   APIInteractionGuildMember,
   CacheType,
-  Client,
   CommandInteraction,
   EmbedBuilder,
   GuildMember,
@@ -32,21 +31,29 @@ export class ProfileCommand implements Command {
       userInVoiceChannel = member.voice.channel != null;
     }
 
+    const { username, accentColor } = interaction.user;
+    const userProfileEmbed = new EmbedBuilder();
+
+    userProfileEmbed.setThumbnail(interaction.user.avatarURL());
+    userProfileEmbed.setAuthor({
+      name: username,
+    });
+    userProfileEmbed.setColor(accentColor ?? Color.BLUE);
+
     this.userProfileService
       .get(interaction.user.id)
       .then((userProfile) => {
         const { totalTimeSpent, lastTimeJoined } = userProfile;
-        const { username, accentColor } = interaction.user;
         let newTotalTimeSpent = totalTimeSpent;
+        const lastUpTime = interaction.client.readyAt;
 
-        //TOOD:
-        // this doesnt handle when the machine died and user leave and joins back again
-        // the only way is probably somehow get the time that the machine went down
-        // and then check if the lastTimeJoined less than the time it dies
-        // if it does, then don't do any update on total time spent just update last time join
         if (userInVoiceChannel) {
           const currentTime = Date.now();
-          newTotalTimeSpent += currentTime - lastTimeJoined;
+
+          if (lastUpTime.getMilliseconds() < lastTimeJoined) {
+            newTotalTimeSpent += currentTime - lastTimeJoined;
+          }
+
           const updatedUserProfile: UserProfile = {
             username: username,
             lastTimeJoined: currentTime,
@@ -56,22 +63,18 @@ export class ProfileCommand implements Command {
           this.userProfileService.save(updatedUserProfile);
         }
 
-        const userProfileEmbed = new EmbedBuilder();
-
-        userProfileEmbed.setThumbnail(interaction.user.avatarURL());
-        userProfileEmbed.setAuthor({
-          name: username,
-        });
-        userProfileEmbed.setColor(accentColor ?? Color.BLUE);
         userProfileEmbed.setTitle(
-          `Spends ${this.toHour(newTotalTimeSpent)} in Voice Chat`,
+          `${username} Spends ${this.toHour(newTotalTimeSpent)} in Voice Chat`,
         );
-
-        interaction.reply({ embeds: [userProfileEmbed] });
       })
       .catch((error) => {
         Logger.error(error);
+        userProfileEmbed.setTitle(
+          `${username} Has not Join Any Aoice Channel Yet..`,
+        );
       });
+
+    interaction.reply({ embeds: [userProfileEmbed] });
   }
 
   private toHour(time: number): string {
