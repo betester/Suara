@@ -64,13 +64,15 @@ export class ProfileCommand implements Command {
         }
 
         userProfileEmbed.setTitle(
-          `${username} Spends ${this.toHour(newTotalTimeSpent)} in Voice Chat`,
+          `${username} Spends ${this.toHour(
+            newTotalTimeSpent,
+          )} in Voice Channel`,
         );
       })
       .catch((error) => {
         Logger.error(error);
         userProfileEmbed.setTitle(
-          `${username} Has not Join Any Aoice Channel Yet..`,
+          `${username} Has not Join Any Voice Channel Yet..`,
         );
       });
 
