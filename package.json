@@ -4,6 +4,8 @@
   "description": "Discord bot related with voice chat",
   "main": "index.ts",
   "scripts": {
+    "build": "tsc --build",
+    "start": "node dist/index.js",
     "dev": "npx nodemon",
     "test": "test",
     "prepare": "husky install"
