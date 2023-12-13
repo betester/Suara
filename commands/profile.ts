@@ -55,7 +55,7 @@ export class ProfileCommand implements Command {
           }
 
           const updatedUserProfile: UserProfile = {
-            username: username,
+            username: interaction.user.id,
             lastTimeJoined: currentTime,
             totalTimeSpent: newTotalTimeSpent,
             lastUserAction: UserAction.JOIN,
@@ -74,9 +74,10 @@ export class ProfileCommand implements Command {
         userProfileEmbed.setTitle(
           `${username} Has not Join Any Voice Channel Yet..`,
         );
+      })
+      .finally(() => {
+        interaction.reply({ embeds: [userProfileEmbed] });
       });
-
-    interaction.reply({ embeds: [userProfileEmbed] });
   }
 
   private toHour(time: number): string {
