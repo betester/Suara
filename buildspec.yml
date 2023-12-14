@@ -1,0 +1,21 @@
+version: 0.2
+
+phases:
+  install:
+    on-failure: ABORT
+    runtime-versions:
+      nodejs: 20
+    commands:
+      - npm install
+  prebuild:
+    on-failure: ABORT
+    commands:
+      - npm test
+  build:
+    on-failure: ABORT
+    commands:
+      - npm run build
+
+cache:
+  paths:
+    - 'node_modules/**/*'
