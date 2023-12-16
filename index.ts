@@ -83,7 +83,6 @@ const main = () => {
   client.on("ready", () => {
     Logger.info("Bot is ready 🚀");
   });
-
   client.on(
     "voiceStateUpdate",
     (oldVoiceChannelState: VoiceState, newVoiceChannelState: VoiceState) => {
@@ -118,7 +117,6 @@ const main = () => {
   client.login(TOKEN);
 
   Logger.info("Configuring commands...");
-
   const rest: REST = new REST({ version: "10" }).setToken(TOKEN);
   rest
     .put(Routes.applicationCommands(CLIENT_ID), { body: commands })
