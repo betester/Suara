@@ -89,15 +89,21 @@ export class ProfileCommand implements Command {
     const minutes = Math.floor(hoursms / (60 * 1000));
     const minutesms = hoursms % (60 * 1000);
     const sec = Math.floor(minutesms / 1000);
-    return (
-      days +
-      " days " +
-      hours +
-      " hours " +
-      minutes +
-      " minutes " +
-      sec +
-      " seconds"
-    );
+
+    const timeArray = [];
+    if (days > 0) {
+      timeArray.push(days + " days");
+    }
+    if (hours > 0) {
+      timeArray.push(hours + " hours");
+    }
+    if (minutes > 0) {
+      timeArray.push(minutes + " minutes");
+    }
+    if (sec > 0 || time === 0) {
+      timeArray.push(sec + " seconds");
+    }
+
+    return timeArray.join(" ");
   }
 }
