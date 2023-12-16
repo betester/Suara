@@ -92,16 +92,16 @@ export class ProfileCommand implements Command {
 
     const timeArray = [];
     if (days > 0) {
-      timeArray.push(days + " days");
+      timeArray.push(days + " Days");
     }
     if (hours > 0) {
-      timeArray.push(hours + " hours");
+      timeArray.push(hours + " Hours");
     }
     if (minutes > 0) {
-      timeArray.push(minutes + " minutes");
+      timeArray.push(minutes + " Minutes");
     }
     if (sec > 0 || time === 0) {
-      timeArray.push(sec + " seconds");
+      timeArray.push(sec + " Seconds");
     }
 
     return timeArray.join(" ");
