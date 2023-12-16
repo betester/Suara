@@ -1,0 +1,15 @@
+services:
+  suara:
+    build: .
+    environment:
+      - MONGO_URL=${MONGO_URL}
+      - DISCORD_BOT_TOKEN=${DISCORD_BOT_TOKEN}
+      - DISCORD_CLIENT_ID=${DISCORD_CLIENT_ID}
+  mongo:
+    ports:
+      - "27017:27017"
+    image: "mongo:latest"
+
+networks:
+  suara-network:
+    driver: bridge
