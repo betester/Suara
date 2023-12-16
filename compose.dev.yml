@@ -1,0 +1,14 @@
+services:
+  suara:
+    extends:
+      file: compose.yml
+      service: suara
+    command: npm run dev
+    volumes:
+      - type: bind
+        source: ./
+        target: /app
+  mongo:
+    ports:
+      - "27017:27017"
+    image: "mongo:latest"
