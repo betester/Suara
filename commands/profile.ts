@@ -64,7 +64,7 @@ export class ProfileCommand implements Command {
         }
 
         userProfileEmbed.setTitle(
-          `${username} Spends ${this.toHour(
+          `${username} Spends ${this.parseTime(
             newTotalTimeSpent,
           )} in Voice Channel`,
         );
@@ -80,9 +80,24 @@ export class ProfileCommand implements Command {
       });
   }
 
-  private toHour(time: number): string {
-    const numericHour = time / ProfileCommand.HOUR_MILLISECOND;
-    let hourString = "Hour" + (numericHour > 1 ? "s" : "");
-    return `${numericHour.toFixed(2)} ${hourString}`;
+  // convert time to days, hours, minutes and seconds.
+  private parseTime(time: number): string {
+    const days = Math.floor(time / (24 * 60 * 60 * 1000));
+    const daysms = time % (24 * 60 * 60 * 1000);
+    const hours = Math.floor(daysms / (60 * 60 * 1000));
+    const hoursms = daysms % (60 * 60 * 1000);
+    const minutes = Math.floor(hoursms / (60 * 1000));
+    const minutesms = hoursms % (60 * 1000);
+    const sec = Math.floor(minutesms / 1000);
+    return (
+      days +
+      " days " +
+      hours +
+      " hours " +
+      minutes +
+      " minutes " +
+      sec +
+      " seconds"
+    );
   }
 }
