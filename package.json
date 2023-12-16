@@ -6,7 +6,7 @@
   "scripts": {
     "build": "tsc --build",
     "start": "node dist/index.js",
-    "dev": "npx nodemon",
+    "dev": "npx nodemon -L",
     "test": "test",
     "prepare": "husky install"
   },

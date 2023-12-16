@@ -77,7 +77,6 @@ const main = () => {
       GatewayIntentBits.MessageContent,
     ],
   };
-
   const client: Client = new Client(clientOptions);
 
   client.on("ready", () => {
@@ -115,7 +114,6 @@ const main = () => {
   });
 
   client.login(TOKEN);
-
   Logger.info("Configuring commands...");
   const rest: REST = new REST({ version: "10" }).setToken(TOKEN);
   rest
