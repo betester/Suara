@@ -34,9 +34,9 @@ jobs:
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.PRIVATE_KEY }}
           script: |
-            scp -i ~/.ssh/id_rsa compose.prod.yml ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}:~/compose.prod.yml
-
-            ssh -i ~/.ssh/id_rsa ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} << 'EOF'
+            chmod 600 /root/.ssh/id_rsa
+            scp -i /root/.ssh/id_rsa compose.prod.yml ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}:~/compose.prod.yml
+            ssh -i /root/.ssh/id_rsa ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} << 'EOF'
               # Set environment variables
               export IMAGE_VERSION=${{ github.ref_name }}
               export MONGO_URL=${{ secrets.MONGO_URL }}
