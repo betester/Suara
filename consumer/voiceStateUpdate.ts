@@ -9,7 +9,7 @@ import {
 import { UserAction } from "../enums";
 import jsLogger from "js-logger";
 import { voiceChannelEmbeds } from "../client/embeds";
-import { SpamFilterService, UserProfileService } from "../service";
+import { SpamFilterService } from "../service";
 
 jsLogger.useDefaults();
 const Logger = jsLogger.get("voiceChannelConsumer");
@@ -28,7 +28,7 @@ const consumeUserAction = (
       client.channels
         .fetch(voiceChannelState.channelId)
         .then((channel: VoiceChannel) => {
-          const description: string = `${action} ${channel.name} voice chat`;
+          const description: string = `${user.username} ${action} ${channel.name} voice chat`;
           const author: EmbedAuthorOptions = {
             iconURL: user.avatarURL(),
             name: user.username,
