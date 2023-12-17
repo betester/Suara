@@ -26,7 +26,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           push: true
-          tags: betester/suara:${GITHUB_REF_NAME}
+          tags: betester/suara:${{ github.ref_name }}
       - name: SSH and SCP to EC2
         uses: appleboy/ssh-action@master
         with:
