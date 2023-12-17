@@ -1,0 +1,7 @@
+services:
+  suara:
+    image: betester:suara/${IMAGE_VERSION}
+    extends:
+      file: compose.yml
+      service: suara
+    command: npm start
