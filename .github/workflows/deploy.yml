@@ -27,22 +27,29 @@ jobs:
         with:
           push: true
           tags: betester/suara:${{ github.ref_name }}
-      - name: SSH and SCP to EC2
+
+      - name: SCP to EC2
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.PRIVATE_KEY }}
+          source: "compose.prod.yml"
+          target: "~"
+
+      - name: SSH to EC2
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.PRIVATE_KEY }}
           script: |
-            chmod 600 ~/.ssh/id_rsa
-            scp -i ~/.ssh/id_rsa compose.prod.yml ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}:~/compose.prod.yml
-            ssh -i ~/.ssh/id_rsa ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} << 'EOF'
-              # Set environment variables
-              export IMAGE_VERSION=${{ github.ref_name }}
-              export MONGO_URL=${{ secrets.MONGO_URL }}
-              export DISCORD_BOT_TOKEN=${{ secrets.DISCORD_BOT_TOKEN }}
-              export DISCORD_CLIENT_ID=${{ secrets.DISCORD_CLIENT_ID }}
-              
-              # Run Docker Compose
-              docker-compose -f ~/compose.prod.yml up -d
-            EOF
+            ls -a
+            # Set environment variables
+            export IMAGE_VERSION=${{ github.ref_name }}
+            export MONGO_URL=${{ secrets.MONGO_URL }}
+            export DISCORD_BOT_TOKEN=${{ secrets.DISCORD_BOT_TOKEN }}
+            export DISCORD_CLIENT_ID=${{ secrets.DISCORD_CLIENT_ID }}
+
+            # Run Docker Compose
+            docker-compose -f ~/compose.prod.yml up -d
