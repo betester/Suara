@@ -53,4 +53,6 @@ jobs:
             export DISCORD_CLIENT_ID=${{ secrets.DISCORD_CLIENT_ID }}
 
             # Run Docker Compose
+            docker-compose -f ~/compose.prod.yml stop
+            docker-compose -f ~/compose.prod.yml build
             docker-compose -f ~/compose.prod.yml up -d
