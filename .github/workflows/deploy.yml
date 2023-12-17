@@ -45,13 +45,13 @@ jobs:
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.PRIVATE_KEY }}
           script: |
-            ls -a
             # Set environment variables
-            export IMAGE_VERSION=${{ github.ref_name }}
-            export MONGO_URL=${{ secrets.MONGO_URL }}
-            export DISCORD_BOT_TOKEN=${{ secrets.DISCORD_BOT_TOKEN }}
-            export DISCORD_CLIENT_ID=${{ secrets.DISCORD_CLIENT_ID }}
+            echo "IMAGE_VERSION=${{ github.ref_name }}" > ~/.env
+            echo "MONGO_URL=${{ secrets.MONGO_URL }}" >> ~/.env
+            echo "DISCORD_BOT_TOKEN=${{ secrets.DISCORD_BOT_TOKEN }}" >> ~/.env
+            echo "export DISCORD_CLIENT_ID=${{ secrets.DISCORD_CLIENT_ID }}"  >> ~/.env
 
+            ls -a
             # Run Docker Compose
             docker-compose -f ~/compose.prod.yml stop
             docker-compose -f ~/compose.prod.yml build
