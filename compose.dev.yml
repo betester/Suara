@@ -1,5 +1,6 @@
 services:
   suara:
+    build: .
     extends:
       file: compose.yml
       service: suara

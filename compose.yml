@@ -1,7 +1,5 @@
 services:
   suara:
-    build: .
-    command: npm start
     environment:
       - MONGO_URL=${MONGO_URL}
       - DISCORD_BOT_TOKEN=${DISCORD_BOT_TOKEN}
