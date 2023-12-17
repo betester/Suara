@@ -53,6 +53,6 @@ jobs:
 
             ls -a
             # Run Docker Compose
-            docker-compose -f ~/compose.prod.yml stop
-            docker-compose -f ~/compose.prod.yml build
-            docker-compose -f ~/compose.prod.yml up -d
+            docker-compose -f ~/compose.prod.yml rm -f
+            docker-compose -f ~/compose.prod.yml pull
+            docker-compose -f ~/compose.prod.yml up --build -d
