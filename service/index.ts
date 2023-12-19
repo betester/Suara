@@ -6,4 +6,4 @@ export { SpamFilterService } from "./spamFilterService";
 export { LocalStorage } from "./localStorage";
 export { UserDataService } from "./userDataService";
 export { UserProfileService } from "./userProfileService";
-export { TimeTogetherSpentService } from "./timeTogetherSpentService"
+export { TimeTogetherSpentDataService } from "./timeTogetherSpentDataService"
