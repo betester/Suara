@@ -1,9 +1,9 @@
 import {
-  APIInteractionGuildMember,
   CacheType,
   CommandInteraction,
   EmbedBuilder,
-  GuildMember,
+  Guild,
+  User,
 } from "discord.js";
 import { Command } from "./command";
 import { UserProfileService } from "../service";
@@ -17,32 +17,27 @@ const Logger: ILogger = jsLogger.get("profileCommand");
 
 export class ProfileCommand implements Command {
   private userProfileService: UserProfileService;
-  private static HOUR_MILLISECOND = 3_600_000;
 
   constructor(userProfile: UserProfileService) {
     this.userProfileService = userProfile;
   }
 
-  public execute(interaction: CommandInteraction<CacheType>) {
-    const member: GuildMember | APIInteractionGuildMember = interaction.member;
-    let userInVoiceChannel: boolean = false;
-
-    if (member instanceof GuildMember) {
-      userInVoiceChannel = member.voice.channel != null;
-    }
-
-    const { username, accentColor } = interaction.user;
+  public async execute(interaction: CommandInteraction<CacheType>) {
     const userProfileEmbed = new EmbedBuilder();
+    const user = await this.getUser(interaction)
+    const { username, accentColor, id } = user
+    const userInVoiceChannel = await this.isUserInVoiceChannel(interaction.guild, id)
 
-    userProfileEmbed.setThumbnail(interaction.user.avatarURL());
+    userProfileEmbed.setThumbnail(user.avatarURL());
     userProfileEmbed.setAuthor({
       name: username,
     });
     userProfileEmbed.setColor(accentColor ?? Color.BLUE);
 
-    this.userProfileService
-      .get(interaction.user.id)
-      .then((userProfile) => {
+    try {
+      const userProfile = await this.userProfileService.get(id)
+
+      if (userProfile != null) {
         const { totalTimeSpent, lastTimeJoined } = userProfile;
         let newTotalTimeSpent = totalTimeSpent;
         const lastUpTime = interaction.client.readyAt;
@@ -55,7 +50,7 @@ export class ProfileCommand implements Command {
           }
 
           const updatedUserProfile: UserProfile = {
-            username: interaction.user.id,
+            username: id,
             lastTimeJoined: currentTime,
             totalTimeSpent: newTotalTimeSpent,
             lastUserAction: UserAction.JOIN,
@@ -68,16 +63,60 @@ export class ProfileCommand implements Command {
             newTotalTimeSpent,
           )} in Voice Channel`,
         );
-      })
-      .catch((error) => {
-        Logger.error(error);
+      } else if (userInVoiceChannel) {
+          const currentTime = Date.now();
+
+          const updatedUserProfile: UserProfile = {
+            username: id,
+            lastTimeJoined: currentTime,
+            totalTimeSpent: 0,
+            lastUserAction: UserAction.JOIN,
+          };
+          this.userProfileService.save(updatedUserProfile);
+
+        userProfileEmbed.setTitle(
+          `${username} Spends ${this.parseTime(
+            0,
+          )} in Voice Channel`,
+        );
+      } else {
         userProfileEmbed.setTitle(
           `${username} Has not Join Any Voice Channel Yet..`,
         );
+      }
+    }
+    catch (error) {
+      Logger.error(error);
+
+    } finally {
+      interaction.reply({
+        embeds: [userProfileEmbed]
       })
-      .finally(() => {
-        interaction.reply({ embeds: [userProfileEmbed] });
-      });
+    }
+  }
+
+  private async getUser(interaction: CommandInteraction<CacheType>): Promise<User> {
+    const userId = interaction.options.get("user")
+
+    if (userId == null) {
+      return new Promise<User>((resolve, _) => {
+        resolve(interaction.user)
+      })
+    }
+
+    return interaction.client.users.fetch(userId.value as string)
+  }
+
+  private async isUserInVoiceChannel(guild: Guild, userId: string): Promise<boolean> {
+    const member = await guild.members.fetch(userId)
+    return new Promise((resolve, reject) => {
+      try {
+        resolve(member.voice.channel != null)
+      } catch (_) {
+        reject(false)
+      }
+    })
+
   }
 
   // convert time to days, hours, minutes and seconds.
@@ -106,4 +145,5 @@ export class ProfileCommand implements Command {
 
     return timeArray.join(" ");
   }
+
 }
