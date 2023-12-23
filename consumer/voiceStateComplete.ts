@@ -7,7 +7,53 @@ import { TimeTogetherSpent } from "../models";
 jsLogger.useDefaults();
 const Logger: ILogger = jsLogger.get("consumeVoiceStateComplete");
 
-export const consumeVoiceStateComplete = (
+
+const updateUserTimeSpentToghether = async (
+  userAction: UserAction,
+  client: Client,
+  voiceChannelId: string,
+  userProfileService: UserProfileService,
+  userId: string,
+  timeTogetherSpentService: TimeTogetherSpentService
+) => {
+  try {
+    if (userAction == UserAction.LEAVE) {
+      const channel: VoiceChannel = await client.channels.fetch(voiceChannelId) as VoiceChannel
+      const userIds = channel.members.map(member => member.id)
+
+      const userProfiles = await userProfileService.getMany(userIds)
+      const leavingUserProfile = await userProfileService.get(userId)
+
+      const lastUpTime = client.readyAt
+      const currentTime = Date.now()
+
+      const timeTogetherSpent: TimeTogetherSpent[] = []
+
+      userProfiles.forEach(userProfile => {
+
+        // handles whenever machine died and the user still joins
+        if (lastUpTime.getMilliseconds() < userProfile.lastTimeJoined) {
+          timeTogetherSpent.push(
+            {
+              userA: userId,
+              userB: userProfile.username,
+              timeSpentTogether: Math.min(
+                currentTime - leavingUserProfile.lastTimeJoined,
+                currentTime - userProfile.lastTimeJoined
+              )
+            }
+          )
+        }
+      })
+      timeTogetherSpentService.save(timeTogetherSpent)
+    }
+
+  } catch (error) {
+    Logger.info(error)
+  }
+}
+
+export const consumeVoiceStateComplete = async (
   client: Client,
   voiceChannelId: string,
   userId: string,
@@ -15,49 +61,21 @@ export const consumeVoiceStateComplete = (
   userAction: UserAction,
   spamFilterService: SpamFilterService,
   userProfileService: UserProfileService,
-  timeTogetherSpentService : TimeTogetherSpentService
+  timeTogetherSpentService: TimeTogetherSpentService
 ) => {
   try {
     spamFilterService.countUserJoinOccurence(userId, guildId);
-
-    if (userAction == UserAction.LEAVE) {
-      client
-        .channels
-        .fetch(voiceChannelId)
-        .then(async (channel: VoiceChannel) => {
-          const userIds = channel.members.map(member => member.id)
-
-          const userProfiles = await userProfileService.getMany(userIds)
-          const idxOfLeavingUser = userProfiles.map(userProfile => userProfile.username).indexOf(userId)
-          const leavingUserProfile = userProfiles.splice(idxOfLeavingUser, 1)[0]
-
-          const lastUpTime = client.readyAt
-          const currentTime = Date.now()
-
-          const timeTogetherSpent: TimeTogetherSpent[] = []
-
-          userProfiles.forEach(userProfile => {
-
-            // handles whenever machine died and the user still joins
-            if (lastUpTime.getMilliseconds() < userProfile.lastTimeJoined) {
-              timeTogetherSpent.push(
-                {
-                  userA: userId,
-                  userB: userProfile.username,
-                  timeSpentTogether: Math.min(
-                    currentTime - leavingUserProfile.lastTimeJoined,
-                    currentTime - userProfile.lastTimeJoined
-                  )
-                }
-              )
-            }
-          })
-
-          timeTogetherSpentService.save(timeTogetherSpent)
-        })
-    }
+    await updateUserTimeSpentToghether(
+      userAction,
+      client,
+      voiceChannelId,
+      userProfileService,
+      userId,
+      timeTogetherSpentService
+    )
     userProfileService.saveByUserAction(userId, userAction);
   } catch (error) {
     Logger.error(error);
+  } finally {
   }
 };
