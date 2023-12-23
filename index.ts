@@ -108,8 +108,9 @@ const main = () => {
   );
   client.on(
     "voiceStateComplete",
-    (userId: string, guildId: string, userAction: UserAction) => {
+    (voiceChannelId: string, userId: string, guildId: string, userAction: UserAction) => {
       consumeVoiceStateComplete(
+        voiceChannelId,
         userId,
         guildId,
         userAction,

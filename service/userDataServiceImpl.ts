@@ -11,6 +11,10 @@ export class UserDataServiceImpl<T extends User> implements UserDataService<T> {
     this.ttl = ttl;
   }
 
+  public getMany(key: string[]): Promise<T[]> {
+    throw new Error("No implementation")
+  }
+
   public save(key: string, user: T) {
     this.localStorage.save(key, user, this.ttl);
   }
