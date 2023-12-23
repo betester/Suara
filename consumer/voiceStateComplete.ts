@@ -76,6 +76,5 @@ export const consumeVoiceStateComplete = async (
     userProfileService.saveByUserAction(userId, userAction);
   } catch (error) {
     Logger.error(error);
-  } finally {
   }
 };

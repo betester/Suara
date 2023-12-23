@@ -36,54 +36,31 @@ export class ProfileCommand implements Command {
 
     try {
       const userProfile = await this.userProfileService.get(id)
+      const lastUpTime = interaction.client.readyAt.getMilliseconds();
+      const currentTime = Date.now();
+      let newTotalTimeSpent = 0
+      let newLastTimeJoined = currentTime
 
       if (userProfile != null) {
         const { totalTimeSpent, lastTimeJoined } = userProfile;
-        let newTotalTimeSpent = totalTimeSpent;
-        const lastUpTime = interaction.client.readyAt;
+        newTotalTimeSpent = totalTimeSpent
+        newLastTimeJoined = lastTimeJoined
 
-        if (userInVoiceChannel) {
-          const currentTime = Date.now();
-
-          if (lastUpTime.getMilliseconds() < lastTimeJoined) {
-            newTotalTimeSpent += currentTime - lastTimeJoined;
-          }
-
-          const updatedUserProfile: UserProfile = {
-            username: id,
-            lastTimeJoined: currentTime,
-            totalTimeSpent: newTotalTimeSpent,
-            lastUserAction: UserAction.JOIN,
-          };
-          this.userProfileService.save(updatedUserProfile);
+        if (userInVoiceChannel && lastUpTime < lastTimeJoined) {
+          newTotalTimeSpent += currentTime - lastTimeJoined
         }
-
-        userProfileEmbed.setTitle(
-          `${username} Spends ${this.parseTime(
-            newTotalTimeSpent,
-          )} in Voice Channel`,
-        );
-      } else if (userInVoiceChannel) {
-          const currentTime = Date.now();
-
-          const updatedUserProfile: UserProfile = {
-            username: id,
-            lastTimeJoined: currentTime,
-            totalTimeSpent: 0,
-            lastUserAction: UserAction.JOIN,
-          };
-          this.userProfileService.save(updatedUserProfile);
-
-        userProfileEmbed.setTitle(
-          `${username} Spends ${this.parseTime(
-            0,
-          )} in Voice Channel`,
-        );
-      } else {
-        userProfileEmbed.setTitle(
-          `${username} Has not Join Any Voice Channel Yet..`,
-        );
       }
+      userProfileEmbed.setTitle(`${username} Total Time Spent: ${this.parseTime(newTotalTimeSpent)}`)
+
+      if (userProfile || userInVoiceChannel) {
+        this.userProfileService.save({
+          totalTimeSpent: newTotalTimeSpent,
+          lastTimeJoined: userInVoiceChannel ? currentTime : newLastTimeJoined,
+          username: id,
+          lastUserAction: userInVoiceChannel ? UserAction.JOIN : UserAction.LEAVE
+        })
+      }
+
     }
     catch (error) {
       Logger.error(error);

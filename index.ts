@@ -110,12 +110,14 @@ const main = () => {
     "voiceStateComplete",
     (voiceChannelId: string, userId: string, guildId: string, userAction: UserAction) => {
       consumeVoiceStateComplete(
+        client,
         voiceChannelId,
         userId,
         guildId,
         userAction,
         spamFilterService,
         userProfileService,
+        timeTogetherSpentService
       );
     },
   );

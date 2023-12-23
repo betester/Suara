@@ -28,19 +28,10 @@ export class MongoUserDataServiceImpl<T extends User>
         $in: key
       }
     }
-    return new Promise<T[]>((reject, resolve) => {
-      this
-        .userCollection
-        .find(filter)
-        .toArray()
-        .then((error, result) => {
-          if (error) {
-            reject(error)
-          } else {
-            resolve(result)
-          }
-        })
-    })
+    return this
+      .userCollection
+      .find(filter)
+      .toArray() as unknown as Promise<T[]>
   }
 
   public save(key: string, user: T) {

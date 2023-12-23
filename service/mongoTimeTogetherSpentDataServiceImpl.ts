@@ -46,19 +46,11 @@ export class MongoTimeTogetherSpentImpl<T extends TimeTogetherSpent> implements 
   }
 
   public get(filter: any, limit: number): Promise<T[]> {
-    return new Promise<T[]>((resolve, reject) => {
-      this.timeTogetherSpentCollection
+    return this.timeTogetherSpentCollection
         .find(filter)
         .sort({ timeSpentTogether: -1 })
         .limit(limit)
-        .toArray((err, results) => {
-          if (err) {
-            reject(err);
-          } else {
-            resolve(results);
-          }
-        });
-    });
+        .toArray() as unknown as Promise<T[]>;
   }
 
 
