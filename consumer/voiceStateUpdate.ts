@@ -36,7 +36,6 @@ const consumeUserAction = (
           const embeds: EmbedBuilder[] = [
             voiceChannelEmbeds(action, description, author),
           ];
-
           spamFilterSerivice
             .isSpamming(user.id, voiceChannelState.guild.id)
             .then((userIsSpamming) => {
@@ -54,7 +53,6 @@ const consumeUserAction = (
       Logger.error(error);
     });
 };
-
 export const voiceStateConsumer = (
   client: Client,
   voiceChannelOldState: VoiceState,
@@ -94,7 +92,6 @@ export const voiceStateConsumer = (
 
   client.emit(
     "voiceStateComplete",
-    voiceChannelState.channel.id,
     voiceChannelState.id,
     voiceChannelState.guild.id,
     userAction,
