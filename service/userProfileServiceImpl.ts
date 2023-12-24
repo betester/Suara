@@ -28,9 +28,18 @@ export class UserProfileServiceImpl implements UserProfileService {
         Logger.error(error);
       });
   }
+
   public get(userId: string): Promise<UserProfile> {
     try {
       return this.userDataService.get(userId);
+    } catch (error) {
+      return Promise.reject(error);
+    }
+  }
+
+  public getMany(userIds: string[]): Promise<UserProfile[]> {
+    try {
+      return this.userDataService.getMany(userIds);
     } catch (error) {
       return Promise.reject(error);
     }

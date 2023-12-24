@@ -13,6 +13,7 @@
   "author": "betester",
   "license": "ISC",
   "dependencies": {
+    "@discordjs/voice": "^0.16.1",
     "discord.js": "^14.14.1",
     "js-logger": "^1.6.1",
     "mongodb": "^6.3.0",

@@ -5,3 +5,5 @@ services:
       file: compose.yml
       service: suara
     command: npm start
+    environment:
+      - ENVIRONMENT=prod

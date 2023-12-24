@@ -5,6 +5,8 @@ services:
       file: compose.yml
       service: suara
     command: npm run dev
+    environment:
+      - ENVIRONMENT=dev
     volumes:
       - type: bind
         source: ./

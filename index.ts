@@ -13,16 +13,26 @@ import {
   MemoryCache,
   SpamFilterService,
   SpamFilterServiceImpl,
+  TimeTogetherSpentDataService,
+  TimeTogetherSpentService,
+  TimeTogetherSpentServiceImpl,
   UserDataService,
   UserDataServiceImpl,
   UserProfileService,
   UserProfileServiceImpl,
+  MongoTimeTogetherSpentImpl,
 } from "./service";
 import { MemoryStorage } from "node-ts-cache-storage-memory";
-import { UserProfile, UserSpam } from "./models";
+import { TimeTogetherSpent, UserProfile, UserSpam } from "./models";
 import { MongoClient } from "mongodb";
 import { MongoUserDataServiceImpl } from "./service/mongoUserDataServiceImpl";
-import { Command, CommandName, ProfileCommand, commands } from "./commands";
+import {
+  Command,
+  CommandName,
+  ProfileCommand,
+  BotCommand,
+  commands,
+} from "./commands";
 import { UserAction } from "./enums";
 
 const main = () => {
@@ -39,6 +49,7 @@ const main = () => {
   const MONGO_URL = process.env.MONGO_URL;
   const MONGO_DATABASE_NAME = "Suara";
   const MONGO_USER_PROFILE_COLLECTION_NAME = "UserProfile";
+  const MONGO_TIME_TOGETHER_SPENT_COLLECTION_NAME = "TimeTogetherSpent";
 
   const memoryCache: MemoryStorage = new MemoryStorage();
   const cache: LocalStorage<UserSpam> = new MemoryCache<UserSpam>(memoryCache);
@@ -54,6 +65,12 @@ const main = () => {
     cache,
     TTL_SECONDS,
   );
+  const timeTogetherSpent: TimeTogetherSpentDataService<TimeTogetherSpent> =
+    new MongoTimeTogetherSpentImpl(
+      mongoClient,
+      MONGO_DATABASE_NAME,
+      MONGO_TIME_TOGETHER_SPENT_COLLECTION_NAME,
+    );
 
   const spamFilterService: SpamFilterService = new SpamFilterServiceImpl(
     userDataService,
@@ -62,11 +79,8 @@ const main = () => {
   const userProfileService: UserProfileService = new UserProfileServiceImpl(
     userProfileDataService,
   );
-
-  const profileCommand: Command = new ProfileCommand(userProfileService);
-
-  const commandMap: Map<CommandName, Command> = new Map<CommandName, Command>();
-  commandMap.set("profile", profileCommand);
+  const timeTogetherSpentService: TimeTogetherSpentService =
+    new TimeTogetherSpentServiceImpl(timeTogetherSpent);
 
   Logger.info("Configuring discord bot...");
 
@@ -78,6 +92,17 @@ const main = () => {
     ],
   };
   const client: Client = new Client(clientOptions);
+
+  const profileCommand: Command = new ProfileCommand(
+    userProfileService,
+    timeTogetherSpentService,
+    client,
+  );
+  const botCommand: Command = new BotCommand();
+
+  const commandMap: Map<CommandName, Command> = new Map<CommandName, Command>();
+  commandMap.set("profile", profileCommand);
+  commandMap.set("bot", botCommand);
 
   client.on("ready", () => {
     Logger.info("Bot is ready 🚀");
@@ -95,13 +120,21 @@ const main = () => {
   );
   client.on(
     "voiceStateComplete",
-    (userId: string, guildId: string, userAction: UserAction) => {
+    (
+      voiceChannelId: string,
+      userId: string,
+      guildId: string,
+      userAction: UserAction,
+    ) => {
       consumeVoiceStateComplete(
+        client,
+        voiceChannelId,
         userId,
         guildId,
         userAction,
         spamFilterService,
         userProfileService,
+        timeTogetherSpentService,
       );
     },
   );

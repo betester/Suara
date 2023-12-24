@@ -2,22 +2,53 @@ import { ApplicationCommandOptionType } from "discord.js";
 
 export { Command } from "./command";
 export * from "./profile";
+export * from "./bot";
 
-export type CommandName = "profile";
+export type CommandName = "profile" | "bot";
+
+interface Choice {
+  name: string;
+  value: any;
+}
 
 interface CommandOption {
   name: string;
   description: string;
   type: ApplicationCommandOptionType;
+  choices?: Choice[];
   required: boolean;
 }
 
 interface CommandDescription {
   name: CommandName;
   description: string;
-  options? : CommandOption[]
+  options?: CommandOption[];
 }
 
+const devCommands: CommandDescription[] = [
+  {
+    name: "bot",
+    description: "Action that will be taken by the bot",
+    options: [
+      {
+        name: "vc",
+        description: "Voice Channel Action",
+        type: ApplicationCommandOptionType.String,
+        choices: [
+          {
+            name: "join",
+            value: "join",
+          },
+          {
+            name: "leave",
+            value: "leave",
+          },
+        ],
+        required: true,
+      },
+    ],
+  },
+];
 export const commands: CommandDescription[] = [
   {
     name: "profile",
@@ -27,8 +58,9 @@ export const commands: CommandDescription[] = [
         name: "user",
         description: "Select user",
         type: ApplicationCommandOptionType.User,
-        required: false
-      }
-    ]
+        required: false,
+      },
+    ],
   },
+  ...(process.env.ENVIRONMENT === "dev" ? devCommands : []),
 ];
