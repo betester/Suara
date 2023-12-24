@@ -19,7 +19,9 @@ export class TimeTogetherSpentServiceImpl implements TimeTogetherSpentService {
     return this.timeTogetherSpentDataService.get(filter, limit);
   }
 
-  public async save(timeTogetherSpents: TimeTogetherSpent[]): Promise<void[]> {
+  public async save(
+    timeTogetherSpents: TimeTogetherSpent[],
+  ): Promise<TimeTogetherSpent[]> {
     const promisesResult: Promise<TimeTogetherSpent>[] = [];
     const correctedIdOrder = timeTogetherSpents.map((timeSpent) =>
       this.setUserIdOrdering(timeSpent),
@@ -33,18 +35,20 @@ export class TimeTogetherSpentServiceImpl implements TimeTogetherSpentService {
     });
 
     const allTimeSpents = await Promise.all(promisesResult);
-    const allSaved = allTimeSpents.map((existingResult) => {
-      for (let i = 0; i < correctedIdOrder.length; i++) {
-        if (existingResult != null) {
-          correctedIdOrder[i].timeSpentTogether +=
-            existingResult.timeSpentTogether;
-        }
-        return this.timeTogetherSpentDataService.save(correctedIdOrder[i], {
+    const allSaved: Promise<TimeTogetherSpent>[] = [];
+
+    for (let i = 0; i < correctedIdOrder.length; i++) {
+      if (allTimeSpents[i] != null) {
+        correctedIdOrder[i].timeSpentTogether +=
+          allTimeSpents[i].timeSpentTogether;
+      }
+      allSaved.push(
+        this.timeTogetherSpentDataService.save(correctedIdOrder[i], {
           userA: correctedIdOrder[i].userA,
           userB: correctedIdOrder[i].userB,
-        });
-      }
-    });
+        }),
+      );
+    }
 
     return Promise.all(allSaved);
   }

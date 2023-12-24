@@ -35,7 +35,7 @@ const updateUserTimeSpentToghether = async (
       const timeTogetherSpent: TimeTogetherSpent[] = [];
 
       userProfiles.forEach((userProfile) => {
-        // handles whenever machine died and the user still joins
+        // TODO: handles whenever machine died and the user still joins
         timeTogetherSpent.push({
           userA: userId,
           userB: userProfile.username,
@@ -45,10 +45,10 @@ const updateUserTimeSpentToghether = async (
           ),
         });
       });
-      timeTogetherSpentService.save(timeTogetherSpent);
+      await timeTogetherSpentService.save(timeTogetherSpent);
     }
   } catch (error) {
-    Logger.info(error);
+    Logger.error(error);
   }
 };
 

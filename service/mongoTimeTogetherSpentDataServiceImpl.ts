@@ -37,13 +37,13 @@ export class MongoTimeTogetherSpentImpl<T extends TimeTogetherSpent>
     ) as unknown as Promise<T>;
   }
 
-  public save(data: T, filter?: any): Promise<void> {
+  public save(data: T, filter?: any): Promise<T> {
     const update = { $set: { ...data } };
-    const promise = new Promise<void>((resolve, reject) => {
+    const promise = new Promise<T>((resolve, reject) => {
       this.timeTogetherSpentCollection
         .updateOne(filter, update, { upsert: true })
-        .then(() => {
-          resolve();
+        .then((result) => {
+          resolve(result as unknown as T);
         })
         .catch((error) => {
           Logger.error(error);

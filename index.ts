@@ -26,7 +26,13 @@ import { MemoryStorage } from "node-ts-cache-storage-memory";
 import { TimeTogetherSpent, UserProfile, UserSpam } from "./models";
 import { MongoClient } from "mongodb";
 import { MongoUserDataServiceImpl } from "./service/mongoUserDataServiceImpl";
-import { Command, CommandName, ProfileCommand, commands } from "./commands";
+import {
+  Command,
+  CommandName,
+  ProfileCommand,
+  BotCommand,
+  commands,
+} from "./commands";
 import { UserAction } from "./enums";
 
 const main = () => {
@@ -92,9 +98,11 @@ const main = () => {
     timeTogetherSpentService,
     client,
   );
+  const botCommand: Command = new BotCommand();
 
   const commandMap: Map<CommandName, Command> = new Map<CommandName, Command>();
   commandMap.set("profile", profileCommand);
+  commandMap.set("bot", botCommand);
 
   client.on("ready", () => {
     Logger.info("Bot is ready 🚀");
