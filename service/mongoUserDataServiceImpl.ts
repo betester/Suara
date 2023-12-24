@@ -22,18 +22,6 @@ export class MongoUserDataServiceImpl<T extends User>
     this.userCollection.createIndex({ username: 1 }, { background: true });
   }
 
-  getMany(key: string[]): Promise<T[]> {
-    const filter = {
-      username: {
-        $in: key
-      }
-    }
-    return this
-      .userCollection
-      .find(filter)
-      .toArray() as unknown as Promise<T[]>
-  }
-
   public save(key: string, user: T) {
     const filter = { username: key };
     const update = { $set: { ...user } };
