@@ -13,6 +13,7 @@ import { TimeTogetherSpentService, UserProfileService } from "../service";
 import jsLogger, { ILogger } from "js-logger";
 import { Color, UserAction } from "../enums";
 import { TimeTogetherSpent, UserProfile } from "../models";
+import utils from "../utils";
 
 jsLogger.useDefaults();
 
@@ -74,7 +75,7 @@ export class ProfileCommand implements Command {
       }
       userProfileEmbed.addFields({
         name: "Voice Channel Time Spent",
-        value: this.parseTime(newTotalTimeSpent),
+        value: utils.parseTime(newTotalTimeSpent),
       });
 
       if (userProfile || userInVoiceChannel) {
@@ -192,7 +193,7 @@ export class ProfileCommand implements Command {
       );
 
       for (let i = 0; i < topUserProfiles.length; i++) {
-        newVal += `${topUserProfiles[i].username} - ${this.parseTime(
+        newVal += `${topUserProfiles[i].username} - ${utils.parseTime(
           topNUser[i].timeSpentTogether,
         )}\n`;
       }
@@ -203,32 +204,5 @@ export class ProfileCommand implements Command {
     } catch (error) {
       Logger.error(error);
     }
-  }
-
-  // convert time to days, hours, minutes and seconds.
-  private parseTime(time: number): string {
-    const days = Math.floor(time / (24 * 60 * 60 * 1000));
-    const daysms = time % (24 * 60 * 60 * 1000);
-    const hours = Math.floor(daysms / (60 * 60 * 1000));
-    const hoursms = daysms % (60 * 60 * 1000);
-    const minutes = Math.floor(hoursms / (60 * 1000));
-    const minutesms = hoursms % (60 * 1000);
-    const sec = Math.floor(minutesms / 1000);
-
-    const timeArray = [];
-    if (days > 0) {
-      timeArray.push(days + " Days");
-    }
-    if (hours > 0) {
-      timeArray.push(hours + " Hours");
-    }
-    if (minutes > 0) {
-      timeArray.push(minutes + " Minutes");
-    }
-    if (sec > 0 || time === 0) {
-      timeArray.push(sec + " Seconds");
-    }
-
-    return timeArray.join(" ");
   }
 }

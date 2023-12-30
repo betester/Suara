@@ -1,3 +1,4 @@
+import { UserDataServiceGetManyArgs } from ".";
 import { User } from "../models";
 import { LocalStorage } from "./localStorage";
 import { UserDataService } from "./userDataService";
@@ -11,8 +12,8 @@ export class UserDataServiceImpl<T extends User> implements UserDataService<T> {
     this.ttl = ttl;
   }
 
-  public getMany(key: string[]): Promise<T[]> {
-    throw new Error("No implementation")
+  public getMany(args: UserDataServiceGetManyArgs): Promise<T[]> {
+    throw new Error("No implementation");
   }
 
   public save(key: string, user: T) {

@@ -1,5 +1,5 @@
 import { User } from "../models";
-import { UserDataService } from "./userDataService";
+import { UserDataService, UserDataServiceGetManyArgs } from "./userDataService";
 import { Collection, MongoClient } from "mongodb";
 import jsLogger, { ILogger } from "js-logger";
 
@@ -22,16 +22,12 @@ export class MongoUserDataServiceImpl<T extends User>
     this.userCollection.createIndex({ username: 1 }, { background: true });
   }
 
-  getMany(key: string[]): Promise<T[]> {
-    const filter = {
-      username: {
-        $in: key
-      }
-    }
-    return this
-      .userCollection
-      .find(filter)
-      .toArray() as unknown as Promise<T[]>
+  getMany(args: UserDataServiceGetManyArgs): Promise<T[]> {
+    return this.userCollection
+      .find(args.filter)
+      .limit(args.limit)
+      .sort(args.sortBy)
+      .toArray() as unknown as Promise<T[]>;
   }
 
   public save(key: string, user: T) {

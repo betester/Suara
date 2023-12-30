@@ -29,8 +29,43 @@ export class UserProfileServiceImpl implements UserProfileService {
       });
   }
 
-  public get(userId: string): Promise<UserProfile> {
+  public async get(
+    userId: string,
+    userInVoiceChannel: boolean,
+  ): Promise<UserProfile> {
     try {
+      const userProfile = await this.userDataService.get(userId);
+
+      const currentTime = Date.now();
+
+      let newTotalTimeSpent = 0;
+      let newLastTimeJoined = currentTime;
+
+      if (userProfile != null) {
+        const { totalTimeSpent, lastTimeJoined } = userProfile;
+        newTotalTimeSpent = totalTimeSpent;
+        newLastTimeJoined = lastTimeJoined;
+
+        if (userInVoiceChannel && lastUpTime < lastTimeJoined) {
+          newTotalTimeSpent += currentTime - lastTimeJoined;
+        }
+      }
+      userProfileEmbed.addFields({
+        name: "Voice Channel Time Spent",
+        value: utils.parseTime(newTotalTimeSpent),
+      });
+
+      if (userProfile || userInVoiceChannel) {
+        this.userProfileService.save({
+          totalTimeSpent: newTotalTimeSpent,
+          lastTimeJoined: userInVoiceChannel ? currentTime : newLastTimeJoined,
+          username: id,
+          lastUserAction: userInVoiceChannel
+            ? UserAction.JOIN
+            : UserAction.LEAVE,
+        });
+      }
+
       return this.userDataService.get(userId);
     } catch (error) {
       return Promise.reject(error);
@@ -39,7 +74,26 @@ export class UserProfileServiceImpl implements UserProfileService {
 
   public getMany(userIds: string[]): Promise<UserProfile[]> {
     try {
-      return this.userDataService.getMany(userIds);
+      return this.userDataService.getMany({
+        filter: {
+          username: {
+            $in: userIds,
+          },
+        },
+      });
+    } catch (error) {
+      return Promise.reject(error);
+    }
+  }
+
+  public leaderboard(limit: number): Promise<UserProfile[]> {
+    try {
+      return this.userDataService.getMany({
+        limit,
+        sortBy: {
+          totalTimeSpent: -1,
+        },
+      });
     } catch (error) {
       return Promise.reject(error);
     }
