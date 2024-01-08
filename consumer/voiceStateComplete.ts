@@ -6,7 +6,6 @@ import {
   UserProfileService,
 } from "../service";
 import jsLogger, { ILogger } from "js-logger";
-import { TimeTogetherSpent } from "../models";
 
 jsLogger.useDefaults();
 const Logger: ILogger = jsLogger.get("consumeVoiceStateComplete");
@@ -18,7 +17,7 @@ const updateUserTimeSpentToghether = async (
   userProfileService: UserProfileService,
   userId: string,
   timeTogetherSpentService: TimeTogetherSpentService,
-  guildId: string
+  guildId: string,
 ) => {
   try {
     if (userAction == UserAction.LEAVE) {
@@ -29,24 +28,10 @@ const updateUserTimeSpentToghether = async (
 
       const userProfiles = await userProfileService.getMany(userIds, guildId);
       const leavingUserProfile = await userProfileService.get(userId, guildId);
-
-      const lastUpTime = client.readyAt;
-      const currentTime = Date.now();
-
-      const timeTogetherSpent: TimeTogetherSpent[] = [];
-
-      userProfiles.forEach((userProfile) => {
-        // TODO: handles whenever machine died and the user still joins
-        timeTogetherSpent.push({
-          userA: userId,
-          userB: userProfile.username,
-          timeSpentTogether: Math.min(
-            currentTime - leavingUserProfile.lastTimeJoined,
-            currentTime - userProfile.lastTimeJoined,
-          ),
-        });
-      });
-      await timeTogetherSpentService.save(timeTogetherSpent);
+      await timeTogetherSpentService.updateTimeSpentWith(
+        leavingUserProfile,
+        userProfiles,
+      );
     }
   } catch (error) {
     Logger.error(error);
@@ -72,7 +57,7 @@ export const consumeVoiceStateComplete = async (
       userProfileService,
       userId,
       timeTogetherSpentService,
-      guildId
+      guildId,
     );
     userProfileService.saveByUserAction(userId, guildId, userAction);
   } catch (error) {

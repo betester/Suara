@@ -23,5 +23,14 @@ export class LeaderboardCommand implements Command {
     this.userProfileService = userProfileService;
   }
 
-  public async execute(interaction: CommandInteraction<CacheType>) {}
+  public async execute(interaction: CommandInteraction<CacheType>) {
+    // get all user that joins the voice channel
+    const currentlyJoiningUser =
+      await this.userProfileService.getCurrentUserInVoiceChannel(
+        interaction.guildId,
+      );
+    // update manually time spent with each other, consider async
+    // update manually for each user the time spent of individual
+    // return top N from the leaderboard
+  }
 }

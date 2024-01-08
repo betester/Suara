@@ -12,7 +12,7 @@ import { Command } from "./command";
 import { TimeTogetherSpentService, UserProfileService } from "../service";
 import jsLogger, { ILogger } from "js-logger";
 import { Color, UserAction } from "../enums";
-import { TimeTogetherSpent, UserProfile } from "../models";
+import { UserProfile } from "../models";
 import utils from "../utils";
 
 jsLogger.useDefaults();
@@ -51,43 +51,25 @@ export class ProfileCommand implements Command {
     userProfileEmbed.setColor(accentColor ?? Color.BLUE);
 
     try {
-      const userProfile = await this.userProfileService.get(id, interaction.guild.id);
-
-      const lastUpTime = this.client.readyTimestamp;
-      const currentTime = Date.now();
-      await this.updateTimeSpentWith(
-        userVoiceChannel,
-        userProfile,
-        lastUpTime,
-        currentTime,
+      const userProfile = await this.userProfileService.get(
+        id,
+        interaction.guild.id,
       );
-      let newTotalTimeSpent = 0;
-      let newLastTimeJoined = currentTime;
+      const lastUserAction = userInVoiceChannel
+        ? UserAction.JOIN
+        : UserAction.LEAVE;
+      await this.updateTimeSpentWith(userVoiceChannel, userProfile);
 
-      if (userProfile != null) {
-        const { totalTimeSpent, lastTimeJoined } = userProfile;
-        newTotalTimeSpent = totalTimeSpent;
-        newLastTimeJoined = lastTimeJoined;
+      const newUserProfile = await this.userProfileService.saveByUserAction(
+        userProfile.username,
+        interaction.guildId,
+        lastUserAction,
+      );
 
-        if (userInVoiceChannel && lastUpTime < lastTimeJoined) {
-          newTotalTimeSpent += currentTime - lastTimeJoined;
-        }
-      }
       userProfileEmbed.addFields({
         name: "Voice Channel Time Spent",
-        value: utils.parseTime(newTotalTimeSpent),
+        value: utils.parseTime(newUserProfile.totalTimeSpent),
       });
-
-      if (userProfile || userInVoiceChannel) {
-        this.userProfileService.save({
-          totalTimeSpent: newTotalTimeSpent,
-          lastTimeJoined: userInVoiceChannel ? currentTime : newLastTimeJoined,
-          username: id,
-          lastUserAction: userInVoiceChannel
-            ? UserAction.JOIN
-            : UserAction.LEAVE,
-        }, interaction.guild.id);
-      }
     } catch (error) {
       Logger.error(error);
     } finally {
@@ -129,8 +111,6 @@ export class ProfileCommand implements Command {
   private async updateTimeSpentWith(
     voiceChannel: VoiceBasedChannel,
     user: UserProfile,
-    lastUpTime: number,
-    currentTime: number,
   ) {
     try {
       if (voiceChannel == null) {
@@ -141,23 +121,14 @@ export class ProfileCommand implements Command {
         (member) => member.id,
       );
       currentJoinMembers.splice(currentJoinMembers.indexOf(user.username), 1);
-      const userProfiles =
-        await this.userProfileService.getMany(currentJoinMembers, voiceChannel.guild.id);
-      const timeTogetherSpent: TimeTogetherSpent[] = [];
-
-      userProfiles.forEach((userProfile) => {
-        //TODO: handle when user still join and machine died
-        timeTogetherSpent.push({
-          userA: user.username,
-          userB: userProfile.username,
-          timeSpentTogether: Math.min(
-            currentTime - user.lastTimeJoined,
-            currentTime - userProfile.lastTimeJoined,
-          ),
-        });
-      });
-
-      await this.timeTogetherSpentService.save(timeTogetherSpent);
+      const userProfiles = await this.userProfileService.getMany(
+        currentJoinMembers,
+        voiceChannel.guild.id,
+      );
+      await this.timeTogetherSpentService.updateTimeSpentWith(
+        user,
+        userProfiles,
+      );
     } catch (error) {
       Logger.error(error);
     }
