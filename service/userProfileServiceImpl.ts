@@ -109,11 +109,8 @@ export class UserProfileServiceImpl implements UserProfileService {
       const { lastTimeJoined, totalTimeSpent, lastUserAction } =
         previousProfile;
       newTotalTimeSpent = totalTimeSpent;
-      // ensure that if the machine were to died, it will keep track the correct time
-      if (
-        lastUserAction == UserAction.JOIN &&
-        currentAction == UserAction.LEAVE
-      ) {
+
+      if (lastUserAction == UserAction.JOIN) {
         newTotalTimeSpent += currentTime - lastTimeJoined;
       }
     }

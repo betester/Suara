@@ -55,13 +55,17 @@ export class ProfileCommand implements Command {
         id,
         interaction.guild.id,
       );
+
       const lastUserAction = userInVoiceChannel
         ? UserAction.JOIN
         : UserAction.LEAVE;
-      await this.updateTimeSpentWith(userVoiceChannel, userProfile);
+
+      if (userProfile != null) {
+        await this.updateTimeSpentWith(userVoiceChannel, userProfile);
+      }
 
       const newUserProfile = await this.userProfileService.saveByUserAction(
-        userProfile.username,
+        id,
         interaction.guildId,
         lastUserAction,
       );

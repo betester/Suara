@@ -20,14 +20,17 @@ export class MongoUserDataServiceImpl<T extends User>
     const db = mongoClient.db(dbName);
     this.userCollection = db.collection(collectionName);
     this.userCollection.createIndex({ username: 1 }, { background: true });
-    this.userCollection.createIndex({ lastUserAction: 1 }, { background: true })
+    this.userCollection.createIndex(
+      { lastUserAction: 1 },
+      { background: true },
+    );
   }
 
   getMany(args: UserDataServiceGetManyArgs): Promise<T[]> {
     return this.userCollection
-      .find(args.filter)
-      .limit(args.limit)
-      .sort(args.sortBy)
+      .find(args.filter ?? {})
+      .limit(args.limit ?? 0)
+      .sort(args.sortBy ?? {})
       .toArray() as unknown as Promise<T[]>;
   }
 

@@ -18,11 +18,11 @@ export class UserDataServiceFactory {
   get<T extends User>(guildId: string): UserDataService<T> {
     if (!this.collections.has(guildId)) {
       const newCollection = new MongoUserDataServiceImpl(
-        this.client, 
-        this.dbName, 
-        `${this.collectionPrefix}:{guildId}`
+        this.client,
+        this.dbName,
+        `${this.collectionPrefix}:{guildId}`,
       );
-      this.collections.set("guildId", newCollection);
+      this.collections.set(guildId, newCollection);
     }
     return this.collections.get(guildId) as UserDataService<T>;
   }
