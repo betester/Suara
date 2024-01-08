@@ -51,7 +51,7 @@ export class ProfileCommand implements Command {
     userProfileEmbed.setColor(accentColor ?? Color.BLUE);
 
     try {
-      const userProfile = await this.userProfileService.get(id);
+      const userProfile = await this.userProfileService.get(id, interaction.guild.id);
 
       const lastUpTime = this.client.readyTimestamp;
       const currentTime = Date.now();
@@ -86,7 +86,7 @@ export class ProfileCommand implements Command {
           lastUserAction: userInVoiceChannel
             ? UserAction.JOIN
             : UserAction.LEAVE,
-        });
+        }, interaction.guild.id);
       }
     } catch (error) {
       Logger.error(error);
@@ -142,7 +142,7 @@ export class ProfileCommand implements Command {
       );
       currentJoinMembers.splice(currentJoinMembers.indexOf(user.username), 1);
       const userProfiles =
-        await this.userProfileService.getMany(currentJoinMembers);
+        await this.userProfileService.getMany(currentJoinMembers, voiceChannel.guild.id);
       const timeTogetherSpent: TimeTogetherSpent[] = [];
 
       userProfiles.forEach((userProfile) => {

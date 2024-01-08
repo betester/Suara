@@ -20,6 +20,7 @@ export class MongoUserDataServiceImpl<T extends User>
     const db = mongoClient.db(dbName);
     this.userCollection = db.collection(collectionName);
     this.userCollection.createIndex({ username: 1 }, { background: true });
+    this.userCollection.createIndex({ lastUserAction: 1 }, { background: true })
   }
 
   getMany(args: UserDataServiceGetManyArgs): Promise<T[]> {

@@ -18,6 +18,7 @@ const updateUserTimeSpentToghether = async (
   userProfileService: UserProfileService,
   userId: string,
   timeTogetherSpentService: TimeTogetherSpentService,
+  guildId: string
 ) => {
   try {
     if (userAction == UserAction.LEAVE) {
@@ -26,8 +27,8 @@ const updateUserTimeSpentToghether = async (
       )) as VoiceChannel;
       const userIds = channel.members.map((member) => member.id);
 
-      const userProfiles = await userProfileService.getMany(userIds);
-      const leavingUserProfile = await userProfileService.get(userId);
+      const userProfiles = await userProfileService.getMany(userIds, guildId);
+      const leavingUserProfile = await userProfileService.get(userId, guildId);
 
       const lastUpTime = client.readyAt;
       const currentTime = Date.now();
@@ -71,8 +72,9 @@ export const consumeVoiceStateComplete = async (
       userProfileService,
       userId,
       timeTogetherSpentService,
+      guildId
     );
-    userProfileService.saveByUserAction(userId, userAction);
+    userProfileService.saveByUserAction(userId, guildId, userAction);
   } catch (error) {
     Logger.error(error);
   }

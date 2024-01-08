@@ -21,11 +21,12 @@ import {
   UserProfileService,
   UserProfileServiceImpl,
   MongoTimeTogetherSpentImpl,
+  MongoUserDataServiceImpl,
+  UserDataServiceFactory
 } from "./service";
 import { MemoryStorage } from "node-ts-cache-storage-memory";
 import { TimeTogetherSpent, UserProfile, UserSpam } from "./models";
 import { MongoClient } from "mongodb";
-import { MongoUserDataServiceImpl } from "./service/mongoUserDataServiceImpl";
 import {
   Command,
   CommandName,
@@ -55,12 +56,11 @@ const main = () => {
   const cache: LocalStorage<UserSpam> = new MemoryCache<UserSpam>(memoryCache);
   const mongoClient: MongoClient = new MongoClient(MONGO_URL);
 
-  const userProfileDataService: UserDataService<UserProfile> =
-    new MongoUserDataServiceImpl(
-      mongoClient,
-      MONGO_DATABASE_NAME,
-      MONGO_USER_PROFILE_COLLECTION_NAME,
-    );
+  const userDataServiceFactory: UserDataServiceFactory = new UserDataServiceFactory(
+    mongoClient, 
+    MONGO_DATABASE_NAME,
+    MONGO_USER_PROFILE_COLLECTION_NAME
+  );
   const userDataService: UserDataService<UserSpam> = new UserDataServiceImpl(
     cache,
     TTL_SECONDS,
@@ -77,7 +77,7 @@ const main = () => {
     SPAM_THRESHOLD,
   );
   const userProfileService: UserProfileService = new UserProfileServiceImpl(
-    userProfileDataService,
+    userDataServiceFactory,
   );
   const timeTogetherSpentService: TimeTogetherSpentService =
     new TimeTogetherSpentServiceImpl(timeTogetherSpent);

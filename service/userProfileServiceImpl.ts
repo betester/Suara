@@ -1,6 +1,6 @@
 import { UserAction } from "../enums";
 import { UserProfile } from "../models";
-import { UserDataService } from "./userDataService";
+import { UserDataServiceFactory } from "./userDataServiceFactory";
 import { UserProfileService } from "./userProfileService";
 import jsLogger, { ILogger } from "js-logger";
 
@@ -9,72 +9,49 @@ jsLogger.useDefaults();
 const Logger: ILogger = jsLogger.get("userProfileServiceImpl");
 
 export class UserProfileServiceImpl implements UserProfileService {
-  private userDataService: UserDataService<UserProfile>;
+  private userDataServiceFactory: UserDataServiceFactory;
 
-  constructor(userDataService: UserDataService<UserProfile>) {
-    this.userDataService = userDataService;
+  constructor(userDataServiceFactory: UserDataServiceFactory) {
+    this.userDataServiceFactory = userDataServiceFactory;
   }
 
-  public save(userProfile: UserProfile) {
-    this.userDataService.save(userProfile.username, userProfile);
+  public save(userProfile: UserProfile, guildId: string) {
+    const userDataService = this.userDataServiceFactory.get<UserProfile>(guildId);
+    userDataService.save(userProfile.username, userProfile);
   }
 
-  public saveByUserAction(userId: string, userAction: UserAction) {
-    this.get(userId)
+  public saveByUserAction(userId: string, guildId: string, userAction: UserAction) {
+    this.get(userId, guildId)
       .then((previousProfile) => {
-        this.save(this.getUserProfile(userId, previousProfile, userAction));
+        this.save(this.getUserProfile(userId, previousProfile, userAction), guildId);
       })
       .catch((error) => {
         Logger.error(error);
       });
   }
 
-  public async get(
+  public get(
     userId: string,
-    userInVoiceChannel: boolean,
+    guildId: string
   ): Promise<UserProfile> {
     try {
-      const userProfile = await this.userDataService.get(userId);
 
-      const currentTime = Date.now();
-
-      let newTotalTimeSpent = 0;
-      let newLastTimeJoined = currentTime;
-
-      if (userProfile != null) {
-        const { totalTimeSpent, lastTimeJoined } = userProfile;
-        newTotalTimeSpent = totalTimeSpent;
-        newLastTimeJoined = lastTimeJoined;
-
-        if (userInVoiceChannel && lastUpTime < lastTimeJoined) {
-          newTotalTimeSpent += currentTime - lastTimeJoined;
-        }
-      }
-      userProfileEmbed.addFields({
-        name: "Voice Channel Time Spent",
-        value: utils.parseTime(newTotalTimeSpent),
-      });
-
-      if (userProfile || userInVoiceChannel) {
-        this.userProfileService.save({
-          totalTimeSpent: newTotalTimeSpent,
-          lastTimeJoined: userInVoiceChannel ? currentTime : newLastTimeJoined,
-          username: id,
-          lastUserAction: userInVoiceChannel
-            ? UserAction.JOIN
-            : UserAction.LEAVE,
-        });
-      }
-
-      return this.userDataService.get(userId);
+      const userDataService = this.userDataServiceFactory.get<UserProfile>(guildId);
+      return userDataService.get(userId);
     } catch (error) {
       return Promise.reject(error);
     }
   }
 
-  public getMany(userIds: string[]): Promise<UserProfile[]> {
+  public getCurrentUserInVoiceChannel(guildId: string) : Promise<UserProfile[]> {
+    return null;
+  }
+
+  public getMany(userIds: string[], guildId: string): Promise<UserProfile[]> {
     try {
-      return this.userDataService.getMany({
+
+      const userDataService = this.userDataServiceFactory.get<UserProfile>(guildId);
+      return userDataService.getMany({
         filter: {
           username: {
             $in: userIds,
@@ -86,9 +63,10 @@ export class UserProfileServiceImpl implements UserProfileService {
     }
   }
 
-  public leaderboard(limit: number): Promise<UserProfile[]> {
+  public leaderboard(limit: number, guildId: string): Promise<UserProfile[]> {
     try {
-      return this.userDataService.getMany({
+      const userDataService = this.userDataServiceFactory.get<UserProfile>(guildId);
+      return userDataService.getMany({
         limit,
         sortBy: {
           totalTimeSpent: -1,
