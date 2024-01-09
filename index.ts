@@ -21,17 +21,19 @@ import {
   UserProfileService,
   UserProfileServiceImpl,
   MongoTimeTogetherSpentImpl,
+  MongoUserDataServiceImpl,
+  UserDataServiceFactory,
 } from "./service";
 import { MemoryStorage } from "node-ts-cache-storage-memory";
 import { TimeTogetherSpent, UserProfile, UserSpam } from "./models";
 import { MongoClient } from "mongodb";
-import { MongoUserDataServiceImpl } from "./service/mongoUserDataServiceImpl";
 import {
   Command,
   CommandName,
   ProfileCommand,
   BotCommand,
   commands,
+  LeaderboardCommand,
 } from "./commands";
 import { UserAction } from "./enums";
 
@@ -55,8 +57,8 @@ const main = () => {
   const cache: LocalStorage<UserSpam> = new MemoryCache<UserSpam>(memoryCache);
   const mongoClient: MongoClient = new MongoClient(MONGO_URL);
 
-  const userProfileDataService: UserDataService<UserProfile> =
-    new MongoUserDataServiceImpl(
+  const userDataServiceFactory: UserDataServiceFactory =
+    new UserDataServiceFactory(
       mongoClient,
       MONGO_DATABASE_NAME,
       MONGO_USER_PROFILE_COLLECTION_NAME,
@@ -77,8 +79,9 @@ const main = () => {
     SPAM_THRESHOLD,
   );
   const userProfileService: UserProfileService = new UserProfileServiceImpl(
-    userProfileDataService,
+    userDataServiceFactory,
   );
+
   const timeTogetherSpentService: TimeTogetherSpentService =
     new TimeTogetherSpentServiceImpl(timeTogetherSpent);
 
@@ -98,10 +101,15 @@ const main = () => {
     timeTogetherSpentService,
     client,
   );
+  const leaderboardCommand: Command = new LeaderboardCommand(
+    userProfileService,
+    timeTogetherSpentService,
+  );
   const botCommand: Command = new BotCommand();
 
   const commandMap: Map<CommandName, Command> = new Map<CommandName, Command>();
   commandMap.set("profile", profileCommand);
+  commandMap.set("leaderboard", leaderboardCommand);
   commandMap.set("bot", botCommand);
 
   client.on("ready", () => {

@@ -12,7 +12,8 @@ import { Command } from "./command";
 import { TimeTogetherSpentService, UserProfileService } from "../service";
 import jsLogger, { ILogger } from "js-logger";
 import { Color, UserAction } from "../enums";
-import { TimeTogetherSpent, UserProfile } from "../models";
+import { UserProfile } from "../models";
+import utils from "../utils";
 
 jsLogger.useDefaults();
 
@@ -50,43 +51,29 @@ export class ProfileCommand implements Command {
     userProfileEmbed.setColor(accentColor ?? Color.BLUE);
 
     try {
-      const userProfile = await this.userProfileService.get(id);
-
-      const lastUpTime = this.client.readyTimestamp;
-      const currentTime = Date.now();
-      await this.updateTimeSpentWith(
-        userVoiceChannel,
-        userProfile,
-        lastUpTime,
-        currentTime,
+      const userProfile = await this.userProfileService.get(
+        id,
+        interaction.guild.id,
       );
-      let newTotalTimeSpent = 0;
-      let newLastTimeJoined = currentTime;
+
+      const lastUserAction = userInVoiceChannel
+        ? UserAction.JOIN
+        : UserAction.LEAVE;
 
       if (userProfile != null) {
-        const { totalTimeSpent, lastTimeJoined } = userProfile;
-        newTotalTimeSpent = totalTimeSpent;
-        newLastTimeJoined = lastTimeJoined;
-
-        if (userInVoiceChannel && lastUpTime < lastTimeJoined) {
-          newTotalTimeSpent += currentTime - lastTimeJoined;
-        }
+        await this.updateTimeSpentWith(userVoiceChannel, userProfile);
       }
+
+      const newUserProfile = await this.userProfileService.saveByUserAction(
+        id,
+        interaction.guildId,
+        lastUserAction,
+      );
+
       userProfileEmbed.addFields({
         name: "Voice Channel Time Spent",
-        value: this.parseTime(newTotalTimeSpent),
+        value: utils.parseTime(newUserProfile.totalTimeSpent),
       });
-
-      if (userProfile || userInVoiceChannel) {
-        this.userProfileService.save({
-          totalTimeSpent: newTotalTimeSpent,
-          lastTimeJoined: userInVoiceChannel ? currentTime : newLastTimeJoined,
-          username: id,
-          lastUserAction: userInVoiceChannel
-            ? UserAction.JOIN
-            : UserAction.LEAVE,
-        });
-      }
     } catch (error) {
       Logger.error(error);
     } finally {
@@ -128,8 +115,6 @@ export class ProfileCommand implements Command {
   private async updateTimeSpentWith(
     voiceChannel: VoiceBasedChannel,
     user: UserProfile,
-    lastUpTime: number,
-    currentTime: number,
   ) {
     try {
       if (voiceChannel == null) {
@@ -140,23 +125,14 @@ export class ProfileCommand implements Command {
         (member) => member.id,
       );
       currentJoinMembers.splice(currentJoinMembers.indexOf(user.username), 1);
-      const userProfiles =
-        await this.userProfileService.getMany(currentJoinMembers);
-      const timeTogetherSpent: TimeTogetherSpent[] = [];
-
-      userProfiles.forEach((userProfile) => {
-        //TODO: handle when user still join and machine died
-        timeTogetherSpent.push({
-          userA: user.username,
-          userB: userProfile.username,
-          timeSpentTogether: Math.min(
-            currentTime - user.lastTimeJoined,
-            currentTime - userProfile.lastTimeJoined,
-          ),
-        });
-      });
-
-      await this.timeTogetherSpentService.save(timeTogetherSpent);
+      const userProfiles = await this.userProfileService.getMany(
+        currentJoinMembers,
+        voiceChannel.guild.id,
+      );
+      await this.timeTogetherSpentService.updateTimeSpentWith(
+        user,
+        userProfiles,
+      );
     } catch (error) {
       Logger.error(error);
     }
@@ -192,7 +168,7 @@ export class ProfileCommand implements Command {
       );
 
       for (let i = 0; i < topUserProfiles.length; i++) {
-        newVal += `${topUserProfiles[i].username} - ${this.parseTime(
+        newVal += `${topUserProfiles[i].username} - ${utils.parseTime(
           topNUser[i].timeSpentTogether,
         )}\n`;
       }
@@ -203,32 +179,5 @@ export class ProfileCommand implements Command {
     } catch (error) {
       Logger.error(error);
     }
-  }
-
-  // convert time to days, hours, minutes and seconds.
-  private parseTime(time: number): string {
-    const days = Math.floor(time / (24 * 60 * 60 * 1000));
-    const daysms = time % (24 * 60 * 60 * 1000);
-    const hours = Math.floor(daysms / (60 * 60 * 1000));
-    const hoursms = daysms % (60 * 60 * 1000);
-    const minutes = Math.floor(hoursms / (60 * 1000));
-    const minutesms = hoursms % (60 * 1000);
-    const sec = Math.floor(minutesms / 1000);
-
-    const timeArray = [];
-    if (days > 0) {
-      timeArray.push(days + " Days");
-    }
-    if (hours > 0) {
-      timeArray.push(hours + " Hours");
-    }
-    if (minutes > 0) {
-      timeArray.push(minutes + " Minutes");
-    }
-    if (sec > 0 || time === 0) {
-      timeArray.push(sec + " Seconds");
-    }
-
-    return timeArray.join(" ");
   }
 }

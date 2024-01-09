@@ -1,4 +1,4 @@
-import { TimeTogetherSpent } from "../models";
+import { TimeTogetherSpent, UserProfile } from "../models";
 import { TimeTogetherSpentDataService } from "./timeTogetherSpentDataService";
 import { TimeTogetherSpentService } from "./timeTogetherSpentService";
 
@@ -17,6 +17,31 @@ export class TimeTogetherSpentServiceImpl implements TimeTogetherSpentService {
     };
 
     return this.timeTogetherSpentDataService.get(filter, limit);
+  }
+
+  public updateTimeSpentWith(
+    user: UserProfile,
+    otherUsers: UserProfile[],
+  ): Promise<void> {
+    try {
+      const timeTogetherSpent: TimeTogetherSpent[] = [];
+      const currentTime = Date.now();
+      otherUsers.forEach((userProfile) => {
+        timeTogetherSpent.push({
+          userA: user.username,
+          userB: userProfile.username,
+          timeSpentTogether: Math.min(
+            currentTime - user.lastTimeJoined,
+            currentTime - userProfile.lastTimeJoined,
+          ),
+        });
+      });
+
+      this.save(timeTogetherSpent);
+      return Promise.resolve();
+    } catch (error) {
+      return Promise.reject();
+    }
   }
 
   public async save(

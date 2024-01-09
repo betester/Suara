@@ -6,7 +6,6 @@ import {
   UserProfileService,
 } from "../service";
 import jsLogger, { ILogger } from "js-logger";
-import { TimeTogetherSpent } from "../models";
 
 jsLogger.useDefaults();
 const Logger: ILogger = jsLogger.get("consumeVoiceStateComplete");
@@ -18,6 +17,7 @@ const updateUserTimeSpentToghether = async (
   userProfileService: UserProfileService,
   userId: string,
   timeTogetherSpentService: TimeTogetherSpentService,
+  guildId: string,
 ) => {
   try {
     if (userAction == UserAction.LEAVE) {
@@ -26,26 +26,12 @@ const updateUserTimeSpentToghether = async (
       )) as VoiceChannel;
       const userIds = channel.members.map((member) => member.id);
 
-      const userProfiles = await userProfileService.getMany(userIds);
-      const leavingUserProfile = await userProfileService.get(userId);
-
-      const lastUpTime = client.readyAt;
-      const currentTime = Date.now();
-
-      const timeTogetherSpent: TimeTogetherSpent[] = [];
-
-      userProfiles.forEach((userProfile) => {
-        // TODO: handles whenever machine died and the user still joins
-        timeTogetherSpent.push({
-          userA: userId,
-          userB: userProfile.username,
-          timeSpentTogether: Math.min(
-            currentTime - leavingUserProfile.lastTimeJoined,
-            currentTime - userProfile.lastTimeJoined,
-          ),
-        });
-      });
-      await timeTogetherSpentService.save(timeTogetherSpent);
+      const userProfiles = await userProfileService.getMany(userIds, guildId);
+      const leavingUserProfile = await userProfileService.get(userId, guildId);
+      await timeTogetherSpentService.updateTimeSpentWith(
+        leavingUserProfile,
+        userProfiles,
+      );
     }
   } catch (error) {
     Logger.error(error);
@@ -71,8 +57,9 @@ export const consumeVoiceStateComplete = async (
       userProfileService,
       userId,
       timeTogetherSpentService,
+      guildId,
     );
-    userProfileService.saveByUserAction(userId, userAction);
+    userProfileService.saveByUserAction(userId, guildId, userAction);
   } catch (error) {
     Logger.error(error);
   }
