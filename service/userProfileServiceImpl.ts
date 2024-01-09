@@ -109,7 +109,8 @@ export class UserProfileServiceImpl implements UserProfileService {
       const { lastTimeJoined, totalTimeSpent, lastUserAction } =
         previousProfile;
       newTotalTimeSpent = totalTimeSpent;
-
+      // problematic if the machine died and the user leaves
+      // it will keep track regardless whether the user is in voice channel or not
       if (lastUserAction == UserAction.JOIN) {
         newTotalTimeSpent += currentTime - lastTimeJoined;
       }

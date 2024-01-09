@@ -3,8 +3,9 @@ import { ApplicationCommandOptionType } from "discord.js";
 export { Command } from "./command";
 export * from "./profile";
 export * from "./bot";
+export * from "./leaderboard";
 
-export type CommandName = "profile" | "bot";
+export type CommandName = "profile" | "bot" | "leaderboard";
 
 interface Choice {
   name: string;
@@ -61,6 +62,10 @@ export const commands: CommandDescription[] = [
         required: false,
       },
     ],
+  },
+  {
+    name: "leaderboard",
+    description: "Shows top 10 users who spent their time on voice channel",
   },
   ...(process.env.ENVIRONMENT === "dev" ? devCommands : []),
 ];
