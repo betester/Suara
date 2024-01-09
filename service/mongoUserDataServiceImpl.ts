@@ -24,6 +24,10 @@ export class MongoUserDataServiceImpl<T extends User>
       { lastUserAction: 1 },
       { background: true },
     );
+    this.userCollection.createIndex(
+      { totalTimeSpent: -1 },
+      { background: true },
+    );
   }
 
   getMany(args: UserDataServiceGetManyArgs): Promise<T[]> {
