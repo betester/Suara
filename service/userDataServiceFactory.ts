@@ -20,7 +20,7 @@ export class UserDataServiceFactory {
       const newCollection = new MongoUserDataServiceImpl(
         this.client,
         this.dbName,
-        `${this.collectionPrefix}:{guildId}`,
+        `${this.collectionPrefix}:${guildId}`,
       );
       this.collections.set(guildId, newCollection);
     }
