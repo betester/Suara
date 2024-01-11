@@ -15,3 +15,10 @@ services:
     ports:
       - "27017:27017"
     image: "mongo:latest"
+    networks:
+      - suara_network
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: "2.0"

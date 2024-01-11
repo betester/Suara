@@ -4,6 +4,7 @@ import { UserProfileService, TimeTogetherSpentService } from "../service";
 import jsLogger, { ILogger } from "js-logger";
 import { UserProfile } from "../models";
 import utils from "../utils";
+import { calculateTimeTakenOnMethod } from "../monitor";
 
 jsLogger.useDefaults();
 
@@ -21,6 +22,7 @@ export class LeaderboardCommand implements Command {
     this.timeTogetherSpentService = timeTogetherSpentService;
   }
 
+  @calculateTimeTakenOnMethod
   public async execute(interaction: CommandInteraction<CacheType>) {
     try {
       // get all user that joins the voice channel
