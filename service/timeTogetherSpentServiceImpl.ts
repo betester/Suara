@@ -1,4 +1,5 @@
 import { TimeTogetherSpent, UserProfile } from "../models";
+import { countMethodCall } from "../monitor";
 import { TimeTogetherSpentDataService } from "./timeTogetherSpentDataService";
 import { TimeTogetherSpentService } from "./timeTogetherSpentService";
 
@@ -11,6 +12,7 @@ export class TimeTogetherSpentServiceImpl implements TimeTogetherSpentService {
     this.timeTogetherSpentDataService = timeTogetherSpentDataService;
   }
 
+  @countMethodCall
   public get(userId: string, limit: number): Promise<TimeTogetherSpent[]> {
     const filter = {
       $or: [{ userA: userId }, { userB: userId }],
@@ -19,6 +21,7 @@ export class TimeTogetherSpentServiceImpl implements TimeTogetherSpentService {
     return this.timeTogetherSpentDataService.get(filter, limit);
   }
 
+  @countMethodCall
   public updateTimeSpentWith(
     user: UserProfile,
     otherUsers: UserProfile[],
@@ -44,6 +47,7 @@ export class TimeTogetherSpentServiceImpl implements TimeTogetherSpentService {
     }
   }
 
+  @countMethodCall
   public async save(
     timeTogetherSpents: TimeTogetherSpent[],
   ): Promise<TimeTogetherSpent[]> {

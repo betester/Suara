@@ -3,6 +3,7 @@ import { User, UserSpam } from "../models";
 import { SpamFilterService } from "./spamFilterService";
 import { UserDataService } from "./userDataService";
 import jsLogger from "js-logger";
+import { countMethodCall } from "../monitor";
 
 jsLogger.useDefaults();
 
@@ -20,6 +21,7 @@ export class SpamFilterServiceImpl implements SpamFilterService {
     this.spamThreshold = spamThreshold;
   }
 
+  @countMethodCall
   public isSpamming(userId: string, guildId: string): Promise<boolean> {
     const promise: Promise<boolean> = new Promise<boolean>(
       (resolve, reject) => {
@@ -37,6 +39,7 @@ export class SpamFilterServiceImpl implements SpamFilterService {
     return promise;
   }
 
+  @countMethodCall
   public countUserJoinOccurence(username: string, guildId: string) {
     const user: UserSpam = {
       username,

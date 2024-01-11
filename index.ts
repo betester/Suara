@@ -36,6 +36,7 @@ import {
   LeaderboardCommand,
 } from "./commands";
 import { UserAction } from "./enums";
+import { monitoringServer } from "./monitor";
 
 const main = () => {
   jsLogger.useDefaults();
@@ -52,6 +53,8 @@ const main = () => {
   const MONGO_DATABASE_NAME = "Suara";
   const MONGO_USER_PROFILE_COLLECTION_NAME = "UserProfile";
   const MONGO_TIME_TOGETHER_SPENT_COLLECTION_NAME = "TimeTogetherSpent";
+
+  const MONITOR_PORT = 8020;
 
   const memoryCache: MemoryStorage = new MemoryStorage();
   const cache: LocalStorage<UserSpam> = new MemoryCache<UserSpam>(memoryCache);
@@ -114,6 +117,9 @@ const main = () => {
 
   client.on("ready", () => {
     Logger.info("Bot is ready 🚀");
+    monitoringServer.listen(MONITOR_PORT, () => {
+      Logger.info("Monitoring server is ready 🖥️");
+    });
   });
   client.on(
     "voiceStateUpdate",

@@ -50,9 +50,9 @@ jobs:
             echo "MONGO_URL=${{ secrets.MONGO_URL }}" >> ~/.env
             echo "DISCORD_BOT_TOKEN=${{ secrets.DISCORD_BOT_TOKEN }}" >> ~/.env
             echo "export DISCORD_CLIENT_ID=${{ secrets.DISCORD_CLIENT_ID }}"  >> ~/.env
-
+            echo "export GF_SECURITY_ADMIN_PASSWORD=${{ secrets.GF_SECURITY_ADMIN_PASSWORD }}" >> ~/.env 
             ls -a
             # Run Docker Compose
-            docker-compose -f ~/compose.prod.yml rm -f
-            docker-compose -f ~/compose.prod.yml pull
-            docker-compose -f ~/compose.prod.yml up --build -d
+            docker-compose -f ~/compose.yml -f ~/compose.prod.yml up -d
+            # remove any unused docker container, cache and so on
+            docker-compose system prune -a -f

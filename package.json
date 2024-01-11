@@ -17,7 +17,8 @@
     "discord.js": "^14.14.1",
     "js-logger": "^1.6.1",
     "mongodb": "^6.3.0",
-    "node-ts-cache-storage-memory": "^4.4.0"
+    "node-ts-cache-storage-memory": "^4.4.0",
+    "prom-client": "^15.1.0"
   },
   "devDependencies": {
     "husky": "^8.0.3",

@@ -1,5 +1,6 @@
 import { UserAction } from "../enums";
 import { UserProfile } from "../models";
+import { countMethodCall } from "../monitor";
 import { UserDataServiceFactory } from "./userDataServiceFactory";
 import { UserProfileService } from "./userProfileService";
 import jsLogger, { ILogger } from "js-logger";
@@ -15,12 +16,14 @@ export class UserProfileServiceImpl implements UserProfileService {
     this.userDataServiceFactory = userDataServiceFactory;
   }
 
+  @countMethodCall
   public save(userProfile: UserProfile, guildId: string) {
     const userDataService =
       this.userDataServiceFactory.get<UserProfile>(guildId);
     userDataService.save(userProfile.username, userProfile);
   }
 
+  @countMethodCall
   public async saveByUserAction(
     userId: string,
     guildId: string,
@@ -42,6 +45,7 @@ export class UserProfileServiceImpl implements UserProfileService {
       });
   }
 
+  @countMethodCall
   public get(userId: string, guildId: string): Promise<UserProfile> {
     try {
       const userDataService =
@@ -52,6 +56,7 @@ export class UserProfileServiceImpl implements UserProfileService {
     }
   }
 
+  @countMethodCall
   public getCurrentUserInVoiceChannel(guildId: string): Promise<UserProfile[]> {
     try {
       const userDataService =
@@ -66,6 +71,7 @@ export class UserProfileServiceImpl implements UserProfileService {
     }
   }
 
+  @countMethodCall
   public getMany(userIds: string[], guildId: string): Promise<UserProfile[]> {
     try {
       const userDataService =
@@ -82,6 +88,7 @@ export class UserProfileServiceImpl implements UserProfileService {
     }
   }
 
+  @countMethodCall
   public leaderboard(limit: number, guildId: string): Promise<UserProfile[]> {
     try {
       const userDataService =

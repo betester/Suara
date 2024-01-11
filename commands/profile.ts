@@ -14,6 +14,7 @@ import jsLogger, { ILogger } from "js-logger";
 import { Color, UserAction } from "../enums";
 import { UserProfile } from "../models";
 import utils from "../utils";
+import { calculateTimeTakenOnMethod } from "../monitor";
 
 jsLogger.useDefaults();
 
@@ -34,6 +35,7 @@ export class ProfileCommand implements Command {
     this.client = client;
   }
 
+  @calculateTimeTakenOnMethod
   public async execute(interaction: CommandInteraction<CacheType>) {
     const userProfileEmbed = new EmbedBuilder();
     const user = await this.getUser(interaction);

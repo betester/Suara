@@ -1,6 +1,50 @@
+version: "3"
+
+networks:
+  suara_network:
+    driver: bridge
+
 services:
   suara:
+    networks:
+      - suara_network
+    ports:
+      - "8020:8020"
     environment:
       - MONGO_URL=${MONGO_URL}
       - DISCORD_BOT_TOKEN=${DISCORD_BOT_TOKEN}
       - DISCORD_CLIENT_ID=${DISCORD_CLIENT_ID}
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  prometheus:
+    networks:
+      - suara_network
+    ports:
+      - "9090:9090"
+    image: "prom/prometheus"
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: "1.0"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+
+  grafana:
+    image: grafana/grafana:latest
+    networks:
+      - suara_network
+    ports:
+      - "3000:3000"
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: "1.0"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GF_SECURITY_ADMIN_PASSWORD}
+    depends_on:
+      - prometheus
