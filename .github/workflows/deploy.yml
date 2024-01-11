@@ -35,7 +35,7 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.PRIVATE_KEY }}
-          source: "compose.prod.yml,compose.yml"
+          source: "compose.prod.yml,compose.yml,prometheus.yml"
           target: "~"
 
       - name: SSH to EC2
