@@ -86,6 +86,7 @@ export class ProfileCommand implements Command {
     }
   }
 
+<<<<<<< Updated upstream
   private async getUser(
     interaction: CommandInteraction<CacheType>,
   ): Promise<User> {
@@ -181,5 +182,47 @@ export class ProfileCommand implements Command {
     } catch (error) {
       Logger.error(error);
     }
+=======
+  // convert time to days, hours, minutes and seconds.
+  private parseTime(time: number): string {
+    const years = Math.floor(time / (365 * 24 * 60 * 60 * 1000));
+    const yearsms = time % (365 * 24 * 60 * 60 * 1000);
+    const months = Math.floor(yearsms / (30 * 24 * 60 * 60 * 1000));
+    const monthsms = yearsms % (30 * 24 * 60 * 60 * 1000);
+    const weeks = Math.floor(monthsms / (7 * 24 * 60 * 60 * 1000));
+    const weeksms = monthsms % (7 * 24 * 60 * 60 * 1000);
+    const days = Math.floor(weeksms / (24 * 60 * 60 * 1000));
+    const daysms = weeksms % (24 * 60 * 60 * 1000);
+    const hours = Math.floor(daysms / (60 * 60 * 1000));
+    const hoursms = daysms % (60 * 60 * 1000);
+    const minutes = Math.floor(hoursms / (60 * 1000));
+    const minutesms = hoursms % (60 * 1000);
+    const sec = Math.floor(minutesms / 1000);
+
+    const timeArray = [];
+    if (years > 0) {
+      timeArray.push(years + " Years");
+    }
+    if (months > 0) {
+      timeArray.push(months + " Months");
+    }
+    if (weeks > 0) {
+      timeArray.push(weeks + " Weeks");
+    }
+    if (days > 0) {
+      timeArray.push(days + " Days");
+    }
+    if (hours > 0) {
+      timeArray.push(hours + " Hours");
+    }
+    if (minutes > 0) {
+      timeArray.push(minutes + " Minutes");
+    }
+    if (sec > 0 || time === 0) {
+      timeArray.push(sec + " Seconds");
+    }
+
+    return timeArray.slice(0, 3).join(" ");
+>>>>>>> Stashed changes
   }
 }
