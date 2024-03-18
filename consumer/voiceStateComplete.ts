@@ -29,6 +29,7 @@ const updateUserTimeSpentToghether = async (
       const userProfiles = await userProfileService.getMany(userIds, guildId);
       const leavingUserProfile = await userProfileService.get(userId, guildId);
       await timeTogetherSpentService.updateTimeSpentWith(
+        guildId,
         leavingUserProfile,
         userProfiles,
       );
