@@ -1,28 +1,31 @@
 import { TimeTogetherSpent, UserProfile } from "../models";
 import { countMethodCall } from "../monitor";
-import { TimeTogetherSpentDataService } from "./timeTogetherSpentDataService";
+import { TimeTogetherSpentDataServiceFactory } from "./timeTogetherSpentDataFactory";
 import { TimeTogetherSpentService } from "./timeTogetherSpentService";
 
 export class TimeTogetherSpentServiceImpl implements TimeTogetherSpentService {
-  private timeTogetherSpentDataService: TimeTogetherSpentDataService<TimeTogetherSpent>;
+  private timeTogetherSpentDataServiceFactory: TimeTogetherSpentDataServiceFactory;
 
   constructor(
-    timeTogetherSpentDataService: TimeTogetherSpentDataService<TimeTogetherSpent>,
+    timeTogetherSpentDataServiceFactory: TimeTogetherSpentDataServiceFactory,
   ) {
-    this.timeTogetherSpentDataService = timeTogetherSpentDataService;
+    this.timeTogetherSpentDataServiceFactory = timeTogetherSpentDataServiceFactory;
   }
 
   @countMethodCall
-  public get(userId: string, limit: number): Promise<TimeTogetherSpent[]> {
+  public get(guildId: string, userId: string, limit: number): Promise<TimeTogetherSpent[]> {
     const filter = {
       $or: [{ userA: userId }, { userB: userId }],
     };
 
-    return this.timeTogetherSpentDataService.get(filter, limit);
+    const dataService = this.timeTogetherSpentDataServiceFactory.get(guildId);
+
+    return dataService.get(filter, limit);
   }
 
   @countMethodCall
   public updateTimeSpentWith(
+    guildId: string,
     user: UserProfile,
     otherUsers: UserProfile[],
   ): Promise<void> {
@@ -40,7 +43,7 @@ export class TimeTogetherSpentServiceImpl implements TimeTogetherSpentService {
         });
       });
 
-      this.save(timeTogetherSpent);
+      this.save(guildId, timeTogetherSpent);
       return Promise.resolve();
     } catch (error) {
       return Promise.reject();
@@ -49,18 +52,21 @@ export class TimeTogetherSpentServiceImpl implements TimeTogetherSpentService {
 
   @countMethodCall
   public async save(
+    guildId: string,
     timeTogetherSpents: TimeTogetherSpent[],
   ): Promise<TimeTogetherSpent[]> {
     const promisesResult: Promise<TimeTogetherSpent>[] = [];
     const correctedIdOrder = timeTogetherSpents.map((timeSpent) =>
       this.setUserIdOrdering(timeSpent),
     );
+    const dataService = this.timeTogetherSpentDataServiceFactory.get(guildId);
+
     correctedIdOrder.forEach((timeSpent) => {
       const filter = {
         userA: timeSpent.userA,
         userB: timeSpent.userB,
       };
-      promisesResult.push(this.timeTogetherSpentDataService.getOne(filter));
+      promisesResult.push(dataService.getOne(filter));
     });
 
     const allTimeSpents = await Promise.all(promisesResult);
@@ -72,7 +78,7 @@ export class TimeTogetherSpentServiceImpl implements TimeTogetherSpentService {
           allTimeSpents[i].timeSpentTogether;
       }
       allSaved.push(
-        this.timeTogetherSpentDataService.save(correctedIdOrder[i], {
+        dataService.save(correctedIdOrder[i], {
           userA: correctedIdOrder[i].userA,
           userB: correctedIdOrder[i].userB,
         }),

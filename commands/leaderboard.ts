@@ -37,6 +37,7 @@ export class LeaderboardCommand implements Command {
       for (let i = 0; i < currentlyJoiningUser.length; i++) {
         for (let j = i + 1; j < currentlyJoiningUser.length; j++) {
           this.timeTogetherSpentService.updateTimeSpentWith(
+            interaction.guildId,
             currentlyJoiningUser[i],
             currentlyJoiningUser.slice(i + 1),
           );

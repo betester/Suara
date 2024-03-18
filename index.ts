@@ -13,19 +13,16 @@ import {
   MemoryCache,
   SpamFilterService,
   SpamFilterServiceImpl,
-  TimeTogetherSpentDataService,
   TimeTogetherSpentService,
   TimeTogetherSpentServiceImpl,
   UserDataService,
   UserDataServiceImpl,
   UserProfileService,
   UserProfileServiceImpl,
-  MongoTimeTogetherSpentImpl,
-  MongoUserDataServiceImpl,
   UserDataServiceFactory,
 } from "./service";
 import { MemoryStorage } from "node-ts-cache-storage-memory";
-import { TimeTogetherSpent, UserProfile, UserSpam } from "./models";
+import { UserSpam } from "./models";
 import { MongoClient } from "mongodb";
 import {
   Command,
@@ -37,6 +34,7 @@ import {
 } from "./commands";
 import { UserAction } from "./enums";
 import { monitoringServer } from "./monitor";
+import { TimeTogetherSpentDataServiceFactory } from "./service/timeTogetherSpentDataFactory";
 
 const main = () => {
   jsLogger.useDefaults();
@@ -70,12 +68,13 @@ const main = () => {
     cache,
     TTL_SECONDS,
   );
-  const timeTogetherSpent: TimeTogetherSpentDataService<TimeTogetherSpent> =
-    new MongoTimeTogetherSpentImpl(
+
+  const timeTogetherSpentFactory: TimeTogetherSpentDataServiceFactory = 
+    new TimeTogetherSpentDataServiceFactory(
       mongoClient,
       MONGO_DATABASE_NAME,
-      MONGO_TIME_TOGETHER_SPENT_COLLECTION_NAME,
-    );
+      MONGO_TIME_TOGETHER_SPENT_COLLECTION_NAME
+    )
 
   const spamFilterService: SpamFilterService = new SpamFilterServiceImpl(
     userDataService,
@@ -86,7 +85,7 @@ const main = () => {
   );
 
   const timeTogetherSpentService: TimeTogetherSpentService =
-    new TimeTogetherSpentServiceImpl(timeTogetherSpent);
+    new TimeTogetherSpentServiceImpl(timeTogetherSpentFactory);
 
   Logger.info("Configuring discord bot...");
 

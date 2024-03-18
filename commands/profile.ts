@@ -63,7 +63,7 @@ export class ProfileCommand implements Command {
         : UserAction.LEAVE;
 
       if (userProfile != null) {
-        await this.updateTimeSpentWith(userVoiceChannel, userProfile);
+        await this.updateTimeSpentWith(interaction.guildId, userVoiceChannel, userProfile);
       }
 
       const newUserProfile = await this.userProfileService.saveByUserAction(
@@ -79,7 +79,7 @@ export class ProfileCommand implements Command {
     } catch (error) {
       Logger.error(error);
     } finally {
-      await this.addTopTimeSpentTogether(userProfileEmbed, id, 3);
+      await this.addTopTimeSpentTogether(interaction.guildId, userProfileEmbed, id, 3);
       interaction.reply({
         embeds: [userProfileEmbed],
       });
@@ -115,6 +115,7 @@ export class ProfileCommand implements Command {
   }
 
   private async updateTimeSpentWith(
+    guildId: string,
     voiceChannel: VoiceBasedChannel,
     user: UserProfile,
   ) {
@@ -132,6 +133,7 @@ export class ProfileCommand implements Command {
         voiceChannel.guild.id,
       );
       await this.timeTogetherSpentService.updateTimeSpentWith(
+        guildId,
         user,
         userProfiles,
       );
@@ -141,12 +143,13 @@ export class ProfileCommand implements Command {
   }
 
   private async addTopTimeSpentTogether(
+    guildId: string, 
     embed: EmbedBuilder,
     username: string,
     n: number,
   ) {
     try {
-      const topNUser = await this.timeTogetherSpentService.get(username, n);
+      const topNUser = await this.timeTogetherSpentService.get(guildId, username, n);
       const fields: APIEmbedField = {
         name: "Most Time Spent With",
         value: "Haven't spent time with anyone else... 🐪",
